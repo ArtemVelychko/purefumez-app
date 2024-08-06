@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-  AlertDialogContent
+  AlertDialogContent,
 } from "@/components/ui/alert-dialog";
 
 interface ConfirmModalProps {
@@ -27,27 +27,32 @@ export const ConfirmModal = ({ children, onConfirm }: ConfirmModalProps) => {
 
   return (
     <AlertDialog>
-    <AlertDialogTrigger onClick={(e) => e.stopPropagation()} asChild>
-      {children}
-    </AlertDialogTrigger>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>
-          Are you absolutely sure?
-        </AlertDialogTitle>
-        <AlertDialogDescription>
-          This action cannot be undone.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel onClick={e => e.stopPropagation()}>
-          Cancel
-        </AlertDialogCancel>
-        <AlertDialogAction onClick={handleConfirm}>
-          Confirm
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+      <AlertDialogTrigger
+        onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) =>
+          e.stopPropagation()
+        }
+        asChild
+      >
+        {children}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) =>
+              e.stopPropagation()
+            }
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>Confirm</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
