@@ -173,7 +173,7 @@ export const MaterialForm = ({
             <Input
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
-              className="text-5xl bg-transparent font-bold break-words outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="text-4xl bg-transparent font-bold break-words outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               disabled={preview}
             />
             {!preview && (

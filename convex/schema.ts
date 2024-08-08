@@ -45,7 +45,9 @@ export default defineSchema({
       )
     ),
     concentration: v.optional(v.number()),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_title", ["userId", "title"]),
 
   formulas: defineTable({
     title: v.string(),
@@ -68,6 +70,7 @@ export default defineSchema({
         v.object({
           material: v.id("materials"),
           weight: v.number(),
+          ifralimit: v.number(),
           dilution: v.number(),
         })
       )

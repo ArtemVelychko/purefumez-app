@@ -29,6 +29,7 @@ import { LeafyGreen, Sprout, FlaskRound } from "lucide-react";
 import { Beaker } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Item } from "./Item";
+import { Logo } from "@/app/(marketing)/_components/logo";
 // import { UserButton } from "@clerk/clerk-react";
 
 export const Navigation = () => {
@@ -173,8 +174,7 @@ export const Navigation = () => {
       >
         <div className="flex h-[60px] items-center border-b px-6">
           <Link className="flex items-center gap-2 font-semibold" href="#">
-            <Beaker className="h-8 w-8 text-primary" />
-            <span className="font-bold text-lg">purefumez</span>
+            <Logo />
           </Link>
           <Button
             onClick={collapse}

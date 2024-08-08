@@ -1,253 +1,205 @@
 import { v } from "convex/values";
-
 import { mutation, query } from "./_generated/server";
 
 export const get = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const accords = await ctx.db
-      .query("accords")
+    const formulas = await ctx.db
+      .query("formulas")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
-
-    return accords;
+    return formulas;
   },
 });
 
-export const archiveAccord = mutation({
-  args: { id: v.id("accords") },
+export const archiveFormula = mutation({
+  args: { id: v.id("formulas") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const existingAccord = await ctx.db.get(args.id);
-
-    if (!existingAccord) {
-      throw new Error("Accord not found");
+    const existingFormula = await ctx.db.get(args.id);
+    if (!existingFormula) {
+      throw new Error("Formula not found");
     }
-
-    if (existingAccord.userId !== userId) {
+    if (existingFormula.userId !== userId) {
       throw new Error("Unauthorized");
     }
-
-    const accord = await ctx.db.patch(args.id, {
+    const formula = await ctx.db.patch(args.id, {
       isArchived: true,
     });
-
-    return accord;
+    return formula;
   },
 });
 
-export const getAccordsSidebar = query({
+export const getFormulasSidebar = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const accords = await ctx.db
-      .query("accords")
+    const formulas = await ctx.db
+      .query("formulas")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("isArchived"), false))
       .order("desc")
       .collect();
-
-    return accords;
+    return formulas;
   },
 });
 
-export const createAccord = mutation({
+export const createFormula = mutation({
   args: {
     title: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const accord = await ctx.db.insert("accords", {
+    const formula = await ctx.db.insert("formulas", {
       title: args.title,
       userId,
       isArchived: false,
       isPublished: false,
-      isBase: false,
       solvent: { name: "Solvent", weight: 0 },
     });
-
-    return accord;
+    return formula;
   },
 });
 
-export const getTrashAccords = query({
+export const getTrashFormulas = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const accords = await ctx.db
-      .query("accords")
+    const formulas = await ctx.db
+      .query("formulas")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("isArchived"), true))
       .order("desc")
       .collect();
-
-    return accords;
+    return formulas;
   },
 });
 
-export const restoreAccord = mutation({
-  args: { id: v.id("accords") },
+export const restoreFormula = mutation({
+  args: { id: v.id("formulas") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const existingAccord = await ctx.db.get(args.id);
-
-    if (!existingAccord) {
-      throw new Error("Accord not found");
+    const existingFormula = await ctx.db.get(args.id);
+    if (!existingFormula) {
+      throw new Error("Formula not found");
     }
-
-    if (existingAccord.userId !== userId) {
+    if (existingFormula.userId !== userId) {
       throw new Error("Unauthorized");
     }
-
-    const accord = await ctx.db.patch(args.id, {
+    const formula = await ctx.db.patch(args.id, {
       isArchived: false,
     });
-
-    return accord;
+    return formula;
   },
 });
 
-export const removeAccord = mutation({
-  args: { id: v.id("accords") },
+export const removeFormula = mutation({
+  args: { id: v.id("formulas") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const existingAccord = await ctx.db.get(args.id);
-
-    if (!existingAccord) {
-      throw new Error("Accord not found");
+    const existingFormula = await ctx.db.get(args.id);
+    if (!existingFormula) {
+      throw new Error("Formula not found");
     }
-
-    if (existingAccord.userId !== userId) {
+    if (existingFormula.userId !== userId) {
       throw new Error("Unauthorized");
     }
-
-    const accord = await ctx.db.delete(args.id);
-
-    return accord;
+    const formula = await ctx.db.delete(args.id);
+    return formula;
   },
 });
 
-export const bulkRemoveAccords = mutation({
-  args: { ids: v.array(v.id("accords")) },
+export const bulkRemoveFormulas = mutation({
+  args: { ids: v.array(v.id("formulas")) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
     for (const id of args.ids) {
-      const existingAccord = await ctx.db.get(id);
-
-      if (!existingAccord) {
-        throw new Error(`Accord with id ${id} not found`);
+      const existingFormula = await ctx.db.get(id);
+      if (!existingFormula) {
+        throw new Error(`Formula with id ${id} not found`);
       }
-
-      if (existingAccord.userId !== userId) {
-        throw new Error(`Unauthorized to delete accord with id ${id}`);
+      if (existingFormula.userId !== userId) {
+        throw new Error(`Unauthorized to delete formula with id ${id}`);
       }
-
       await ctx.db.delete(id);
     }
   },
 });
 
-export const getSearchAccords = query({
+export const getSearchFormulas = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-
-    const accords = await ctx.db
-      .query("accords")
+    const formulas = await ctx.db
+      .query("formulas")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("isArchived"), false))
       .order("desc")
       .collect();
-
-    return accords;
+    return formulas;
   },
 });
 
-export const getAccordById = query({
-  args: { accordId: v.id("accords") },
+export const getFormulaById = query({
+  args: { formulaId: v.id("formulas") },
   handler: async (ctx, args) => {
-    const accord = await ctx.db.get(args.accordId);
-
-    if (!accord) {
-      throw new Error("Accord not found");
+    const formula = await ctx.db.get(args.formulaId);
+    if (!formula) {
+      throw new Error("Formula not found");
     }
-
     const materialDetails = await Promise.all(
-      (accord.materialsInFormula || []).map(async (material) => {
+      (formula.materialsInFormula || []).map(async (material) => {
         return ctx.db.get(material.material);
       })
     );
-
-    return { ...accord, materialDetails };
+    const accordDetails = await Promise.all(
+      (formula.accordsInFormula || []).map(async (accord) => {
+        return ctx.db.get(accord.accord);
+      })
+    );
+    return { ...formula, materialDetails, accordDetails };
   },
 });
 
-export const updateAccord = mutation({
+export const updateFormula = mutation({
   args: {
-    id: v.id("accords"),
+    id: v.id("formulas"),
     title: v.optional(v.string()),
     note: v.optional(v.string()),
     isPublished: v.optional(v.boolean()),
-    isBase: v.optional(v.boolean()),
     materialsInFormula: v.optional(
       v.array(
         v.object({
@@ -258,76 +210,68 @@ export const updateAccord = mutation({
         })
       )
     ),
+    accordsInFormula: v.optional(
+      v.array(
+        v.object({
+          accord: v.id("accords"),
+          weight: v.number(),
+          dilution: v.number(),
+        })
+      )
+    ),
     solvent: v.optional(v.object({ name: v.string(), weight: v.number() })),
     concentration: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-
     if (!identity) {
-      // throw new Error("Not authenticated");
       return;
     }
-
     const userId = identity.subject;
-
     const { id, ...rest } = args;
-
-    const existingAccord = await ctx.db.get(args.id);
-
-    if (!existingAccord) {
+    const existingFormula = await ctx.db.get(args.id);
+    if (!existingFormula) {
       throw new Error("Not found");
     }
-
-    if (existingAccord.userId !== userId) {
+    if (existingFormula.userId !== userId) {
       throw new Error("Unauthorized");
     }
-
-    const accord = await ctx.db.patch(args.id, { ...rest });
-
-    return accord;
+    const formula = await ctx.db.patch(args.id, { ...rest });
+    return formula;
   },
 });
 
-export const duplicateAccord = mutation({
-  args: { id: v.id("accords") },
+export const duplicateFormula = mutation({
+  args: { id: v.id("formulas") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
-
     const userId = identity.subject;
-    const existingAccord = await ctx.db.get(args.id);
-
-    if (!existingAccord) {
-      throw new Error("Accord not found");
+    const existingFormula = await ctx.db.get(args.id);
+    if (!existingFormula) {
+      throw new Error("Formula not found");
     }
-
-    if (existingAccord.userId !== userId) {
+    if (existingFormula.userId !== userId) {
       throw new Error("Unauthorized");
     }
-
-    // Create a new object without _id and createdAt
-    const { _id, _creationTime, ...accordDataToCopy } = existingAccord;
-
-    const newAccord = {
-      ...accordDataToCopy,
-      title: `${existingAccord.title} (copy)`,
+    const { _id, _creationTime, ...formulaDataToCopy } = existingFormula;
+    const newFormula = {
+      ...formulaDataToCopy,
+      title: `${existingFormula.title} (copy)`,
       isArchived: false,
       isPublished: false,
-      userId, // Ensure the new accord is associated with the current user
+      userId,
     };
-
-    const duplicatedAccord = await ctx.db.insert("accords", newAccord);
-
-    return duplicatedAccord;
+    const duplicatedFormula = await ctx.db.insert("formulas", newFormula);
+    return duplicatedFormula;
   },
 });
 
-export const saveAccordToLibrary = mutation({
+export const saveFormulaToLibrary = mutation({
   args: {
-    accordId: v.id("accords"),
+    formulaId: v.id("formulas"),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -336,9 +280,9 @@ export const saveAccordToLibrary = mutation({
     }
     const userId = identity.subject;
 
-    // Fetch the accord
-    const accord = await ctx.db.get(args.accordId);
-    if (!accord) {
+    // Fetch the formula
+    const formula = await ctx.db.get(args.formulaId);
+    if (!formula) {
       throw new Error("Accord not found");
     }
 
@@ -346,7 +290,7 @@ export const saveAccordToLibrary = mutation({
     const materialIdMap = new Map();
 
     // Save all materials from the accord to the user's library if they don't already exist
-    for (const material of accord.materialsInFormula || []) {
+    for (const material of formula.materialsInFormula || []) {
       const existingMaterial = await ctx.db.get(material.material);
       if (existingMaterial) {
         // Check if the user already has this material
@@ -382,56 +326,32 @@ export const saveAccordToLibrary = mutation({
       }
     }
 
-    // Create a new accord in the user's library with updated material references
-    const newAccord = await ctx.db.insert("accords", {
-      title: accord.title + " (copy)",
+    // Create a new formula in the user's library with updated material references
+    const newFormula = await ctx.db.insert("formulas", {
+      title: formula.title + " (copy)",
       userId,
       isArchived: false,
       isPublished: false,
-      isBase: accord.isBase,
-      solvent: accord.solvent,
-      materialsInFormula: (accord.materialsInFormula || []).map((material) => ({
+      solvent: formula.solvent,
+      materialsInFormula: (formula.materialsInFormula || []).map((material) => ({
         ...material,
         material: materialIdMap.get(material.material) || material.material,
       })),
-      note: accord.note,
-      concentration: accord.concentration,
+      note: formula.note,
+      concentration: formula.concentration,
     });
 
-    return newAccord;
+    return newFormula;
   },
 });
 
-export const getSharedAccords = query({
+export const getSharedFormulas = query({
   handler: async (ctx) => {
-    const accords = await ctx.db
-      .query("accords")
+    const formulas = await ctx.db
+      .query("formulas")
       .filter((q) => q.eq(q.field("isArchived"), false))
       .order("desc")
       .collect();
-
-    return accords;
+    return formulas;
   },
-});
-
-export const getAccordsForFormula = query({
-  args: { formulaId: v.id("formulas") },
-  handler: async (ctx, args) => {
-    const formula = await ctx.db.get(args.formulaId);
-    if (!formula) {
-      throw new Error("Formula not found");
-    }
-
-    const accordIds = formula.accordsInFormula?.map(a => a.accord) || [];
-
-    const accords = await ctx.db
-      .query("accords")
-      .filter(q => q.and(
-        q.eq(q.field("userId"), formula.userId),
-        q.or(...accordIds.map(id => q.eq(q.field("_id"), id)))
-      ))
-      .collect();
-
-    return accords;
-  }
 });

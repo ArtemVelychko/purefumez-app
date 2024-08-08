@@ -4,20 +4,20 @@ import { useQuery } from "convex/react";
 import { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AccordPage } from "@/components/accord-page";
+import { FormulaPage } from "@/components/formula-page";
 
-interface DocumentIdPageProps {
+interface FormulaPreviewPageProps {
   params: {
-    accordId: Id<"accords">;
+    formulaId: Id<"formulas">;
   };
 }
 
-const AccordIdPage = ({ params }: DocumentIdPageProps) => {
-  const accord = useQuery(api.accords.getAccordById, {
-    accordId: params.accordId,
+const FormulaPreviewPage = ({ params }: FormulaPreviewPageProps) => {
+  const sharedFormula = useQuery(api.formulas.getFormulaById, {
+    formulaId: params.formulaId,
   });
 
-  if (accord === undefined) {
+  if (sharedFormula === undefined) {
     return (
       <div>
         <div className="md:max-w-3xl lg:max-w-4xl mx-auto mt-10">
@@ -32,17 +32,20 @@ const AccordIdPage = ({ params }: DocumentIdPageProps) => {
     );
   }
 
-  if (accord === null) {
-    return <div>Accord not found</div>;
+  if (sharedFormula === null) {
+    return <div>Formula not found or not published</div>;
   }
 
   return (
-    <div className="pb-40 ">
+    <div className="pb-40">
       <div className="md:max-w-3xl lg:max-w-4xl mx-auto">
-        <AccordPage initialData={accord} preview />
+        <FormulaPage 
+          preview 
+          initialData={sharedFormula}
+        />
       </div>
     </div>
   );
 };
 
-export default AccordIdPage;
+export default FormulaPreviewPage;

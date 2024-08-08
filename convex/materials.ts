@@ -400,3 +400,25 @@ export const getMaterialsForAccord = query({
     return materials;
   }
 });
+
+export const getMaterialsForFormula = query({
+  args: { formulaId: v.id("formulas") },
+  handler: async (ctx, args) => {
+    const formula = await ctx.db.get(args.formulaId);
+    if (!formula) {
+      throw new Error("Formula not found");
+    }
+
+    const materialIds = formula.materialsInFormula?.map(m => m.material) || [];
+
+    const materials = await ctx.db
+      .query("materials")
+      .filter(q => q.and(
+        q.eq(q.field("userId"), formula.userId),
+        q.or(...materialIds.map(id => q.eq(q.field("_id"), id)))
+      ))
+      .collect();
+
+    return materials;
+  }
+});

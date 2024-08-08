@@ -3,11 +3,13 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { useSettings } from "@/hooks/use-settings";
 import { Label } from "@/components/ui/label";
 import { ModeToggle } from "@/components/mode-toggle";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 export const SettingsModal = () => {
   const settings = useSettings();
@@ -16,6 +18,9 @@ export const SettingsModal = () => {
     <Dialog open={settings.isOpen} onOpenChange={settings.onClose}>
       <DialogContent>
         <DialogHeader className="border-b pb-3">
+          <VisuallyHidden>
+            <DialogTitle>Settings</DialogTitle>
+          </VisuallyHidden>
           <h2 className="text-lg font-medium">
             My settings
           </h2>

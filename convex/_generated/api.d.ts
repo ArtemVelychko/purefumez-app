@@ -15,6 +15,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as accords from "../accords.js";
+import type * as formulas from "../formulas.js";
 import type * as materials from "../materials.js";
 
 /**
@@ -27,6 +28,7 @@ import type * as materials from "../materials.js";
  */
 declare const fullApi: ApiFromModules<{
   accords: typeof accords;
+  formulas: typeof formulas;
   materials: typeof materials;
 }>;
 export declare const api: FilterApi<
