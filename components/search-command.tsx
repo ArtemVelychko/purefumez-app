@@ -14,10 +14,12 @@ import {
 } from "@/components/ui/command";
 import { useSearch } from "@/hooks/use-search";
 import { api } from "@/convex/_generated/api";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { DialogTitle } from "./ui/dialog";
 
 export const SearchCommand = () => {
   const router = useRouter();
-  // const formulas = useQuery(api.formulas.getSearchFormulas);
+  const formulas = useQuery(api.formulas.getSearchFormulas);
   const materials = useQuery(api.materials.getSearch);
   const accords = useQuery(api.accords.getSearchAccords);
   const [isMounted, setIsMounted] = useState(false);
@@ -68,6 +70,9 @@ export const SearchCommand = () => {
 
   return (
     <CommandDialog open={isOpen} onOpenChange={onClose}>
+      <VisuallyHidden>
+        <DialogTitle>Search Dialog</DialogTitle>
+      </VisuallyHidden>
       <CommandInput placeholder={"Search..."} />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
@@ -99,7 +104,7 @@ export const SearchCommand = () => {
             </CommandItem>
           ))}
         </CommandGroup>
-        {/* <CommandGroup heading="Formulas">
+        <CommandGroup heading="Formulas">
           {formulas?.map((formula) => (
             <CommandItem
               key={formula._id}
@@ -110,7 +115,7 @@ export const SearchCommand = () => {
               <span>{formula.title}</span>
             </CommandItem>
           ))}
-        </CommandGroup> */}
+        </CommandGroup>
       </CommandList>
     </CommandDialog>
   );

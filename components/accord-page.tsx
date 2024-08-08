@@ -302,33 +302,19 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
     finalDilution,
   ]);
 
-  const calculatePureMaterialWeight = (weight: number, dilution: number) => {
-    return roundToThousandths(weight * (dilution / 100));
-  };
-
   const ifraCompliant = (material: MaterialInFormula, totalWeight: number) => {
-    // Calculate the weight of the pure material in the formula
-    const pureMaterialWeight = calculatePureMaterialWeight(
-      material.weight,
-      material.dilution
-    );
+    // Calculate the actual weight of the pure material considering dilution
+    const pureWeight = (material.weight * material.dilution) / 100;
 
-    // Calculate the percentage of the pure material in the total weight
-    const pureMaterialPercentage = roundToThousandths(
-      (pureMaterialWeight / totalWeight) * 100
-    );
+    // Calculate the percentage of the pure material in the formula
+    const purePercentage = (pureWeight / totalWeight) * 100;
 
     // If the IFRA limit is 0, it's considered compliant (no restriction)
     if (material.ifralimit === 0) return true;
 
     // Check if the percentage of the pure material is within the IFRA limit
-    return pureMaterialPercentage <= material.ifralimit;
+    return purePercentage <= material.ifralimit;
   };
-
-  const [sortConfig, setSortConfig] = useState<{
-    key: "note" | "name" | "percentage";
-    direction: "ascending" | "descending";
-  } | null>(null);
 
   return (
     <div className="flex h-full flex-col gap-4 p-4 md:p-6">
@@ -439,7 +425,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                           key={selectedMaterial.material}
                           className={cn(
                             "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-                            { "bg-red-100": !isCompliant }
+                            { "bg-red-700 bg-opacity-20": !isCompliant }
                           )}
                         >
                           <TableCell className="text-sm p-4 align-middle">

@@ -325,9 +325,9 @@ export const MaterialForm = ({
             <div className="flex flex-row justify-between">
               {/* Dilutions */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
+                <Label>
                   My Dilutions
-                </label>
+                </Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline">Open</Button>

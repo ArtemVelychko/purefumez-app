@@ -80,7 +80,6 @@ type AccordInFormula = {
 const roundToThousandths = (num: number): number => {
   return Math.round(num * 1000) / 1000;
 };
-
 export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
   const update = useMutation(api.formulas.updateFormula);
   const queryFunction = preview
@@ -343,15 +342,17 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
   };
 
   const ifraCompliant = (material: MaterialInFormula, totalWeight: number) => {
-    const pureMaterialWeight = calculatePureMaterialWeight(
-      material.weight,
-      material.dilution
-    );
-    const pureMaterialPercentage = roundToThousandths(
-      (pureMaterialWeight / totalWeight) * 100
-    );
+    // Calculate the actual weight of the pure material considering dilution
+    const pureWeight = (material.weight * material.dilution) / 100;
+
+    // Calculate the percentage of the pure material in the formula
+    const purePercentage = (pureWeight / totalWeight) * 100;
+
+    // If the IFRA limit is 0, it's considered compliant (no restriction)
     if (material.ifralimit === 0) return true;
-    return pureMaterialPercentage <= material.ifralimit;
+
+    // Check if the percentage of the pure material is within the IFRA limit
+    return purePercentage <= material.ifralimit;
   };
 
   return (
@@ -443,7 +444,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                           key={selectedMaterial.material}
                           className={cn(
                             "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-                            { "bg-red-100": !isCompliant }
+                            { "bg-red-700 bg-opacity-20": !isCompliant }
                           )}
                         >
                           <TableCell className="text-sm p-4 align-middle">
