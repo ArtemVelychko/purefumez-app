@@ -3,17 +3,10 @@
 import { cn } from "@/lib/utils";
 import {
   ChevronsLeft,
-  MenuIcon,
-  Leaf,
+  Dot,
   Search,
   Settings,
-  Trash,
 } from "lucide-react";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { useParams, usePathname } from "next/navigation";
 import { ElementRef, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
@@ -22,18 +15,15 @@ import { useSearch } from "@/hooks/use-search";
 import { useSettings } from "@/hooks/use-settings";
 import { Navbar } from "./navbar";
 import { Separator } from "@/components/ui/separator";
-import { MaterialNavbar } from "./material-navbar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LeafyGreen, Sprout, FlaskRound } from "lucide-react";
-import { Beaker } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Item } from "./Item";
 import { Logo } from "@/app/(marketing)/_components/logo";
-// import { UserButton } from "@clerk/clerk-react";
+import DilutionCalculator from "@/components/dilution-calculator";
 
 export const Navigation = () => {
-  const params = useParams();
   const settings = useSettings();
   const search = useSearch();
   const pathname = usePathname();
@@ -137,31 +127,6 @@ export const Navigation = () => {
     }
   };
 
-  const navbarPicker = () => {
-    switch (true) {
-      case !!params.formulaId:
-        return (
-          <Navbar
-            isCollapsed={isCollapsed}
-            onResetWidth={resetWidth}
-            isMobile={isMobile}
-          />
-        );
-      default:
-        return (
-          <nav className="bg-transparent px-3 py-2 w-full">
-            {isCollapsed && (
-              <MenuIcon
-                onClick={resetWidth}
-                role="button"
-                className="h-6 w-6 text-muted-foreground"
-              />
-            )}
-          </nav>
-        );
-    }
-  };
-
   return (
     <>
       <aside
@@ -234,7 +199,7 @@ export const Navigation = () => {
               }}
             >
               <Sprout className="size-4 mr-2" />
-              Accords | Bases
+              Accords <Dot /> Bases
             </Link>
 
             <Link
@@ -256,6 +221,10 @@ export const Navigation = () => {
               <FlaskRound className="size-4 mr-2" />
               Formulas
             </Link>
+          </div>
+          <Separator className="m-4" />
+          <div className="px-3 flex justify-end">
+            <DilutionCalculator />
           </div>
         </div>
 

@@ -1,8 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { MenuIcon } from "lucide-react";
-// import { Banner } from "./banner";
 import { UserItem } from "./user-item";
 
 interface NavbarProps {
@@ -12,27 +10,6 @@ interface NavbarProps {
 }
 
 export const Navbar = ({ isCollapsed, onResetWidth, isMobile }: NavbarProps) => {
-  const params = useParams();
-
-  // const formula = useQuery(api.formulas.getFormulaById, {
-  //   formulaId: params.formulaId as Id<"formulas">,
-  // });
-
-  // if (formula === undefined) {
-  //   return (
-  //     <nav className="bg-background px-3 py-2 w-full flex items-center justify-between">
-  //       <Title.Skeleton />
-  //       <div className="flex items-center gap-x-2">
-  //         <Menu.Skeleton />
-  //       </div>
-  //     </nav>
-  //   );
-  // }
-
-  // if (formula === null) {
-  //   return null;
-  // }
-
   return (
     <>
         {isCollapsed && (
@@ -44,10 +21,7 @@ export const Navbar = ({ isCollapsed, onResetWidth, isMobile }: NavbarProps) => 
           />
         )}
 
-        {/* <Publish initialData={formula}/> */}
-
         {((isMobile && isCollapsed) || !isMobile) && <UserItem />}
-      {/* {formula.isArchived && <Banner documentId={formula._id} />} */}
     </>
   );
 };
