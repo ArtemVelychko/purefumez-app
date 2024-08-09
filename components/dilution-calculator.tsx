@@ -62,8 +62,8 @@ const DilutionCalculator = () => {
           <Calculator className="h-5 w-5"/>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg p-6 bg-white rounded-lg shadow-lg">
-        <DialogTitle className="text-xl font-semibold mb-4">
+      <DialogContent>
+        <DialogTitle>
           Dilution Calculator
         </DialogTitle>
         <div className="space-y-4">
@@ -75,7 +75,6 @@ const DilutionCalculator = () => {
               value={startingDilution}
               onChange={(e) => setStartingDilution(e.target.value)}
               placeholder="e.g., 100"
-              className="mt-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -86,7 +85,6 @@ const DilutionCalculator = () => {
               value={desiredDilution}
               onChange={(e) => setDesiredDilution(e.target.value)}
               placeholder="e.g., 10"
-              className="mt-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div>
@@ -97,12 +95,11 @@ const DilutionCalculator = () => {
               value={desiredQuantity}
               onChange={(e) => setDesiredQuantity(e.target.value)}
               placeholder="e.g., 10"
-              className="mt-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           {result && (
-            <p className="mt-4 text-gray-700 border p-4 rounded-md bg-gray-100">
+            <p className="mt-4 text-gray-700 border p-4 rounded-md bg-gray-200">
               {result}
             </p>
           )}

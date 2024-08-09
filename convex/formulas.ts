@@ -283,13 +283,14 @@ export const saveFormulaToLibrary = mutation({
     // Fetch the formula
     const formula = await ctx.db.get(args.formulaId);
     if (!formula) {
-      throw new Error("Accord not found");
+      throw new Error("Formula not found");
     }
 
     // Create a mapping of old material IDs to new material IDs
     const materialIdMap = new Map();
+    const accordIdMap = new Map();
 
-    // Save all materials from the accord to the user's library if they don't already exist
+    // Save all materials from the formula to the user's library if they don't already exist
     for (const material of formula.materialsInFormula || []) {
       const existingMaterial = await ctx.db.get(material.material);
       if (existingMaterial) {
@@ -326,7 +327,26 @@ export const saveFormulaToLibrary = mutation({
       }
     }
 
-    // Create a new formula in the user's library with updated material references
+    // Create simple accords for the user's library
+    for (const accord of formula.accordsInFormula || []) {
+      const existingAccord = await ctx.db.get(accord.accord);
+      if (existingAccord) {
+        const newAccord = await ctx.db.insert("accords", {
+          title: existingAccord.title + " (Placeholder)",
+          userId,
+          isArchived: false,
+          isPublished: false,
+          isBase: false,
+          solvent: { name: "Solvent", weight: 0 },
+          materialsInFormula: [],
+          note: "This is a placeholder accord created when copying a formula.",
+          concentration: 100,
+        });
+        accordIdMap.set(accord.accord, newAccord);
+      }
+    }
+
+    // Create a new formula in the user's library with updated material and accord references
     const newFormula = await ctx.db.insert("formulas", {
       title: formula.title + " (copy)",
       userId,
@@ -336,6 +356,10 @@ export const saveFormulaToLibrary = mutation({
       materialsInFormula: (formula.materialsInFormula || []).map((material) => ({
         ...material,
         material: materialIdMap.get(material.material) || material.material,
+      })),
+      accordsInFormula: (formula.accordsInFormula || []).map((accord) => ({
+        ...accord,
+        accord: accordIdMap.get(accord.accord) || accord.accord,
       })),
       note: formula.note,
       concentration: formula.concentration,

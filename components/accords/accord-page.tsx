@@ -43,9 +43,13 @@ import {
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "./ui/switch";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "./ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import Image from "next/image";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { toast } from "sonner";

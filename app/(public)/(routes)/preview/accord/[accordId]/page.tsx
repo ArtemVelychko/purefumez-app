@@ -4,7 +4,7 @@ import { useQuery } from "convex/react";
 import { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AccordPage } from "@/components/accord-page";
+import { AccordPage } from "@/components/accords/accord-page";
 
 interface DocumentIdPageProps {
   params: {

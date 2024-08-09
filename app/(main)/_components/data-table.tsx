@@ -36,7 +36,6 @@ import { DataTableFacetedFilter } from "./data-table/data-table-faceted-filter";
 import { useMediaQuery } from "usehooks-ts";
 import {
   DropdownMenuLabel,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 interface DataTableProps<TData, TValue> {

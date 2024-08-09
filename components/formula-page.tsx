@@ -388,7 +388,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
         </div>
 
         <div className="mt-4">
-          {materialsInFormula.length > 0 && (
+          {(materialsInFormula.length > 0 || accordsInFormula.length > 0) && (
             <div className="border shadow-sm rounded-md">
               <div className="relative w-full overflow-auto">
                 <Table className="w-full caption-bottom text-sm">
