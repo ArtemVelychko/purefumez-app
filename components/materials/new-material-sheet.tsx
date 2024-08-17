@@ -16,14 +16,13 @@ import { toast } from "sonner";
 import { useMediaQuery } from "usehooks-ts";
 import {
   InputField,
-  SelectField,
   FragrancePyramidField,
   IFRALimitField,
   DilutionsField,
   DateObtainedField,
   TextareaField,
+  ProfilesField
 } from "./fields";
-import { ProfilesField } from "./fields/profiles-field";
 import { Id } from "@/convex/_generated/dataModel";
 
 interface Profile {

@@ -21,12 +21,12 @@ import {
   DilutionsField,
   DateObtainedField,
   TextareaField,
+  ProfilesField,
 } from "./fields";
 import { PriceField } from "./fields/price-field";
 import { ShareMaterial } from "@/app/(main)/_components/share-material";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
-import { ProfilesField } from "./fields/profiles-field";
 
 type Profile = {
   _id: Id<"profiles">;
