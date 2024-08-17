@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: "https://cuddly-whippet-17.clerk.accounts.dev/",
+      domain: "https://clerk.purefumez.com/",
       applicationID: "convex",
     },
   ]
