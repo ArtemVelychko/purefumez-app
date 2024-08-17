@@ -58,6 +58,8 @@ import {
 import { ShareFormula } from "@/app/(main)/_components/share-formula";
 import { pyramidLevels } from "@/lib/pyramid-links";
 import { useTheme } from "next-themes";
+import { Badge } from "@/components/ui/badge";
+import { InputTags } from "./ui/input-tags";
 
 interface FormulaProps {
   initialData: Doc<"formulas">;
@@ -86,6 +88,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
     ? api.accords.getSharedAccords
     : api.accords.getAccordsSidebar;
   const accords = useQuery(queryFunction);
+  const allProfiles = useQuery(api.profiles.get);
 
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(initialData.title);
@@ -97,6 +100,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
   const [solventWeight, setSolventWeight] = useState<number>(
     roundToThousandths(initialData.solvent?.weight || 0)
   );
+  const [tags, setTags] = useState<string[]>(initialData.tags || []);
 
   const [materialsInFormula, setMaterialsInFormula] = useState<
     MaterialInFormula[]
@@ -326,6 +330,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
       accordsInFormula: accordsInFormula,
       solvent: { ...initialData.solvent, weight: solventWeight },
       concentration: finalDilution,
+      tags: tags,
     });
   }, [
     update,
@@ -335,11 +340,8 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
     solventWeight,
     initialData.solvent,
     finalDilution,
+    tags,
   ]);
-
-  const calculatePureMaterialWeight = (weight: number, dilution: number) => {
-    return roundToThousandths(weight * (dilution / 100));
-  };
 
   const ifraCompliant = (material: MaterialInFormula, totalWeight: number) => {
     // Calculate the actual weight of the pure material considering dilution
@@ -350,10 +352,46 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
 
     // If the IFRA limit is 0, it's considered compliant (no restriction)
     if (material.ifralimit === 0) return true;
+    if (material.weight === 0) return true;
 
     // Check if the percentage of the pure material is within the IFRA limit
     return purePercentage <= material.ifralimit;
   };
+
+  const renderMaterialCell = (material: Doc<"materials">) => (
+    <TableCell className="text-sm p-4 align-middle">
+      <div className="flex items-center">
+        <Popover>
+          <PopoverTrigger asChild>
+            <div>{material.title}</div>
+          </PopoverTrigger>
+          <PopoverContent>
+            <div>
+              <span className="font-bold">{material.title}</span>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {material.profiles.map((profileId) => {
+                  const profile = allProfiles?.find((p) => p._id === profileId);
+                  return profile ? (
+                    <Badge
+                      key={profile._id}
+                      style={{ backgroundColor: profile.color }}
+                    >
+                      {profile.title}
+                    </Badge>
+                  ) : null;
+                })}
+              </div>
+              {material.description && (
+                <div className="mt-2">
+                  <span className="text-sm">{material.description}</span>
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </TableCell>
+  );
 
   return (
     <div className="flex h-full flex-col gap-4 p-4 md:p-6">
@@ -364,7 +402,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
             onKeyDown={onKeyDown}
             value={value}
             onChange={(e) => onInput(e.target.value)}
-            className="text-4xl bg-transparent font-bold outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="text-4xl bg-transparent font-bold outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
             disabled={preview}
           />
 
@@ -385,6 +423,14 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
             )}
             {!preview && <ShareFormula initialData={initialData} />}
           </div>
+        </div>
+
+        <div className="mt-4">
+          <InputTags
+            value={tags}
+            onChange={setTags}
+            disabled={preview}
+          />
         </div>
 
         <div className="mt-4">
@@ -425,9 +471,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                         totalWeight
                       );
 
-                      if (!material) {
-                        return null;
-                      }
+                      if (!material) return null;
 
                       const pyramidValues = material.fragrancePyramid || [];
                       const selectedLevels = pyramidLevels.filter((level) =>
@@ -444,7 +488,8 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                           key={selectedMaterial.material}
                           className={cn(
                             "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-                            { "bg-red-700 bg-opacity-20": !isCompliant }
+                            { "bg-red-700 bg-opacity-20": !isCompliant },
+                            { "bg-gray-700 bg-opacity-20": !material.inventory }
                           )}
                         >
                           <TableCell className="text-sm p-4 align-middle">
@@ -477,44 +522,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                             )}
                           </TableCell>
                           <TableCell className="text-sm p-4 align-middle">
-                            <div className="flex items-center">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <div>{material.title}</div>
-                                </PopoverTrigger>
-                                <PopoverContent>
-                                  <div>
-                                    <span className="font-bold">
-                                      {material.title}
-                                    </span>
-                                    <div className="flex items-center mt-2 ml-1">
-                                      <span
-                                        className="mr-1 h-2 w-2 rounded-full"
-                                        style={{
-                                          backgroundColor:
-                                            material.category.color,
-                                        }}
-                                      ></span>
-                                      <span
-                                        className="text-sm font-semibold"
-                                        style={{
-                                          color: material.category.color,
-                                        }}
-                                      >
-                                        {material.category.name}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center mt-2 ml-1">
-                                      {material.description && (
-                                        <span className="text-sm">
-                                          {material.description}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            </div>
+                            {renderMaterialCell(material)}
                           </TableCell>
                           <TableCell className="text-sm p-4 align-middle">
                             {preview ? (
@@ -522,16 +530,13 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                             ) : (
                               <Input
                                 type="number"
-                                value={`${selectedMaterial.weight}`}
+                                min={0}
+                                value={selectedMaterial.weight}
                                 onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (/^\d*\.?\d*$/.test(value)) {
-                                    updateMaterialWeight(
-                                      index,
-                                      value === "" ? 0 : Number(value)
-                                    );
-                                  }
+                                  const value = Number(e.target.value);
+                                  updateMaterialWeight(index, value);
                                 }}
+                                disabled={preview}
                               />
                             )}
                           </TableCell>
@@ -598,9 +603,9 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                       return (
                         <TableRow
                           key={selectedAccord.accord}
-                          className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                          className= "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                         >
-                          <TableCell className="text-sm p-4 align-middle">
+                         <TableCell className="text-sm p-4 align-middle">
                             {/* Add accord note if applicable */}
                           </TableCell>
                           <TableCell className="text-sm p-4 align-middle">
@@ -625,16 +630,13 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                             ) : (
                               <Input
                                 type="number"
-                                value={`${selectedAccord.weight}`}
+                                min={0}
+                                value={selectedAccord.weight}
                                 onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (/^\d*\.?\d*$/.test(value)) {
-                                    updateAccordWeight(
-                                      index,
-                                      value === "" ? 0 : Number(value)
-                                    );
-                                  }
+                                  const value = Number(e.target.value);
+                                  updateAccordWeight(index, value);
                                 }}
+                                disabled={preview}
                               />
                             )}
                           </TableCell>
@@ -679,7 +681,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                         ) : (
                           <Input
                             type="number"
-                            value={`${solventWeight}`}
+                            value={solventWeight}
                             min={0}
                             onChange={(e) =>
                               setSolventWeight(Number(e.target.value))
@@ -814,6 +816,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
           )}
 
           {/* Add Material */}
+          {/* Add Material/Accord */}
           {!preview && (
             <div className="mt-4 flex gap-2">
               <Popover open={open} onOpenChange={setOpen}>
@@ -850,13 +853,27 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                               setOpen(false);
                             }}
                           >
-                            <span
-                              className="mr-2 h-2 w-2 rounded-full"
-                              style={{
-                                backgroundColor: material.category.color,
-                              }}
-                            ></span>
-                            {material.title}
+                            <div className="flex items-center">
+                              <div className="flex mr-2">
+                                {material.profiles
+                                  .slice(0, 1)
+                                  .map((profileId) => {
+                                    const profile = allProfiles?.find(
+                                      (p) => p._id === profileId
+                                    );
+                                    return profile ? (
+                                      <div
+                                        key={profile._id}
+                                        className="w-2 h-2 rounded-full mr-1"
+                                        style={{
+                                          backgroundColor: profile.color,
+                                        }}
+                                      />
+                                    ) : null;
+                                  })}
+                              </div>
+                              <span>{material.title}</span>
+                            </div>
                           </CommandItem>
                         ))}
                       </CommandGroup>

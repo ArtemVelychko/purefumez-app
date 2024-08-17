@@ -14,11 +14,13 @@ import { useTheme } from "next-themes";
 interface FragrancePyramidFieldProps {
   value: string[];
   onChange: (value: string[]) => void;
+  disabled?: boolean;
 }
 
 export const FragrancePyramidField: React.FC<FragrancePyramidFieldProps> = ({
   value,
   onChange,
+  disabled,
 }) => {
   const { theme } = useTheme();
 
@@ -28,7 +30,12 @@ export const FragrancePyramidField: React.FC<FragrancePyramidFieldProps> = ({
         Fragrance pyramid
       </Label>
       <div className="flex gap-x-1">
-        <ToggleGroup type="multiple" value={value} onValueChange={onChange}>
+        <ToggleGroup
+          type="multiple"
+          value={value}
+          onValueChange={onChange}
+          disabled={disabled}
+        >
           {pyramidLevels.map((level) => (
             <ToggleGroupItem key={level.value} value={level.value}>
               <TooltipProvider>

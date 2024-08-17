@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { SignOutButton, useUser } from "@clerk/nextjs";
-import { UserButton } from "@clerk/nextjs";
 
 export const UserItem = () => {
   const { user } = useUser();

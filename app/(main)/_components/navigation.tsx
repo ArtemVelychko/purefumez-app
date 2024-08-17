@@ -6,6 +6,7 @@ import {
   Dot,
   Search,
   Settings,
+  Tags,
 } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { ElementRef, useEffect, useRef, useState } from "react";
@@ -220,6 +221,25 @@ export const Navigation = () => {
             >
               <FlaskRound className="size-4 mr-2" />
               Formulas
+            </Link>
+            <Link
+              className={cn(
+                "flex items-center rounded-lg px-3 py-2 text-gray-500 transition-all hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-50",
+                {
+                  "bg-gray-300 text-gray-900 dark:bg-gray-600 dark:text-gray-50":
+                    pathname.startsWith("/profiles"),
+                }
+              )}
+              href="/profiles"
+              onClick={(e) => {
+                if (isMobile) {
+                  e.preventDefault();
+                  handleLinkClick("/profiles");
+                }
+              }}
+            >
+              <Tags className="size-4 mr-2"/>
+              Profiles
             </Link>
           </div>
           <Separator className="m-4" />

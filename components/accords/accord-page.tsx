@@ -63,6 +63,8 @@ import {
 import { ShareAccord } from "@/app/(main)/_components/share-accord";
 import { pyramidLevels } from "@/lib/pyramid-links";
 import { useTheme } from "next-themes";
+import { Badge } from "../ui/badge";
+import { InputTags } from "../ui/input-tags";
 
 interface ToolbarProps {
   initialData: Doc<"accords">;
@@ -104,6 +106,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
   );
   const [note, setNote] = useState(initialData.note || "");
   const [isBase, setIsBase] = useState(initialData.isBase);
+  const [tags, setTags] = useState<string[]>(initialData.tags || []);
 
   const accordMaterials = useQuery(api.materials.getMaterialsForAccord, {
     accordId: initialData._id,
@@ -118,6 +121,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
   const { theme } = useTheme();
   const router = useRouter();
   const saveAccordToLibrary = useMutation(api.accords.saveAccordToLibrary);
+  const allProfiles = useQuery(api.profiles.get);
 
   const handleSaveAccord = async () => {
     if (!user) {
@@ -296,6 +300,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
       materialsInFormula: materialsInFormula,
       solvent: { ...initialData.solvent, weight: solventWeight },
       concentration: finalDilution,
+      tags: tags,
     });
   }, [
     update,
@@ -304,6 +309,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
     solventWeight,
     initialData.solvent,
     finalDilution,
+    tags,
   ]);
 
   const ifraCompliant = (material: MaterialInFormula, totalWeight: number) => {
@@ -329,7 +335,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
             onKeyDown={onKeyDown}
             value={value}
             onChange={(e) => onInput(e.target.value)}
-            className="text-4xl bg-transparent font-bold outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="text-4xl bg-transparent font-bold outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
             disabled={preview}
           />
 
@@ -370,6 +376,14 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
             )}
             {!preview && <ShareAccord initialData={initialData} />}
           </div>
+        </div>
+
+        <div className="mt-4">
+          <InputTags
+            value={tags}
+            onChange={setTags}
+            disabled={preview}
+          />
         </div>
 
         <div className="mt-4">
@@ -429,7 +443,8 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                           key={selectedMaterial.material}
                           className={cn(
                             "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-                            { "bg-red-700 bg-opacity-20": !isCompliant }
+                            { "bg-red-700 bg-opacity-20": !isCompliant },
+                            { "bg-gray-700 bg-opacity-20": !material.inventory }
                           )}
                         >
                           <TableCell className="text-sm p-4 align-middle">
@@ -472,30 +487,30 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                                     <span className="font-bold">
                                       {material.title}
                                     </span>
-                                    <div className="flex items-center mt-2 ml-1">
-                                      <span
-                                        className="mr-1 h-2 w-2 rounded-full"
-                                        style={{
-                                          backgroundColor:
-                                            material.category.color,
-                                        }}
-                                      ></span>
-                                      <span
-                                        className="text-sm font-semibold"
-                                        style={{
-                                          color: material.category.color,
-                                        }}
-                                      >
-                                        {material.category.name}
-                                      </span>
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {material.profiles.map((profileId) => {
+                                        const profile = allProfiles?.find(
+                                          (p) => p._id === profileId
+                                        );
+                                        return profile ? (
+                                          <Badge
+                                            key={profile._id}
+                                            style={{
+                                              backgroundColor: profile.color,
+                                            }}
+                                          >
+                                            {profile.title}
+                                          </Badge>
+                                        ) : null;
+                                      })}
                                     </div>
-                                    <div className="flex items-center mt-2 ml-1">
-                                      {material.description && (
+                                    {material.description && (
+                                      <div className="mt-2">
                                         <span className="text-sm">
                                           {material.description}
                                         </span>
-                                      )}
-                                    </div>
+                                      </div>
+                                    )}
                                   </div>
                                 </PopoverContent>
                               </Popover>
@@ -504,15 +519,11 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                           <TableCell className="text-sm p-4 align-middle">
                             <Input
                               type="number"
-                              value={`${selectedMaterial.weight}`}
+                              min={0}
+                              value={selectedMaterial.weight}
                               onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^\d*\.?\d*$/.test(value)) {
-                                  updateMaterialWeight(
-                                    index,
-                                    value === "" ? 0 : Number(value)
-                                  );
-                                }
+                                const value = Number(e.target.value);
+                                updateMaterialWeight(index, value);
                               }}
                               disabled={preview}
                             />
@@ -575,7 +586,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                       <TableCell className="text-sm">
                         <Input
                           type="number"
-                          value={`${solventWeight}`}
+                          value={solventWeight}
                           min={0}
                           onChange={(e) =>
                             setSolventWeight(Number(e.target.value))
@@ -736,7 +747,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                       <CommandEmpty>No materials found.</CommandEmpty>
                       <CommandGroup heading="Materials">
                         {materialsToAdd?.map((material) => {
-                          const { _id, title, category } = material;
+                          const { _id, title, profiles } = material;
 
                           return (
                             <CommandItem
@@ -751,11 +762,25 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                                 }
                               }}
                             >
-                              <span
-                                className="mr-2 h-2 w-2 rounded-full"
-                                style={{ backgroundColor: category.color }}
-                              ></span>
-                              {title}
+                              <div className="flex items-center">
+                                <div className="flex mr-2">
+                                  {profiles.slice(0, 1).map((profileId) => {
+                                    const profile = allProfiles?.find(
+                                      (p) => p._id === profileId
+                                    );
+                                    return profile ? (
+                                      <div
+                                        key={profile._id}
+                                        className="w-2 h-2 rounded-full mr-1"
+                                        style={{
+                                          backgroundColor: profile.color,
+                                        }}
+                                      />
+                                    ) : null;
+                                  })}
+                                </div>
+                                <span>{title}</span>
+                              </div>
                             </CommandItem>
                           );
                         })}

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Doc } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useOnOpenMaterial } from "@/hooks/materials/use-on-open-material";
 import { categories } from "./categories";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { useMediaQuery } from "usehooks-ts";
 import {
   InputField,
-  SelectField,
   FragrancePyramidField,
   IFRALimitField,
   DilutionsField,
@@ -27,6 +26,13 @@ import { PriceField } from "./fields/price-field";
 import { ShareMaterial } from "@/app/(main)/_components/share-material";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
+import { ProfilesField } from "./fields/profiles-field";
+
+type Profile = {
+  _id: Id<"profiles">;
+  title: string;
+  color: string;
+};
 
 type EditMaterialProps = {
   initialData: Doc<"materials">;
@@ -42,10 +48,11 @@ export const EditMaterialSheet: React.FC<EditMaterialProps> = ({
     materialId: initialData._id,
   });
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const allProfiles = useQuery(api.profiles.get) || [];
 
   const [formData, setFormData] = useState({
     title: initialData.title,
-    category: initialData.category,
+    profiles: initialData.profiles || [],
     cas: initialData.cas || "",
     altName: initialData.altName || "",
     ifralimit: initialData.ifralimit || 0,
@@ -59,41 +66,49 @@ export const EditMaterialSheet: React.FC<EditMaterialProps> = ({
     inventory: initialData.inventory,
   });
 
+  const selectedProfiles = formData.profiles.map(
+    (profileId) =>
+      allProfiles.find((p) => p._id === profileId) || {
+        _id: profileId,
+        title: "Unknown",
+        color: "#000000",
+      }
+  );
+
   const handleInputChange = useCallback(
-    (field: keyof typeof formData, value: unknown) => {
-      setFormData((prevData) => {
-        const newData = { ...prevData, [field]: value };
-
-        if (field === "category") {
-          const selectedCategory = categories.find(
-            (category) => category.name === value
-          );
-          newData.category = selectedCategory || prevData.category;
-        }
-
-        return newData;
-      });
-
-      const updateData: Partial<typeof formData> = { [field]: value };
+    (field: keyof typeof formData, value: any) => {
+      let newValue = value;
+      let updateData: {
+        id: Id<"materials">;
+        profiles: Id<"profiles">[];
+        [key: string]: unknown;
+      } = {
+        id: initialData._id,
+        profiles: formData.profiles,
+      };
 
       if (field === "dilutions") {
-        updateData.dilutions = [100, ...(value as number[])];
+        // Handle dilutions separately
+        newValue = value as number[];
+        updateData.dilutions = [100, ...newValue];
+      } else if (field === "profiles") {
+        newValue = (value as Profile[]).map((profile) => profile._id);
+        updateData.profiles = newValue;
       } else if (field === "dateObtained") {
-        updateData.dateObtained = value
-          ? new Date(value as string).toISOString()
-          : undefined;
-      } else if (field === "category") {
-        const selectedCategory = categories.find(
-          (category) => category.name === value
-        );
-        updateData.category = selectedCategory;
-      } else if (field === "fragrancePyramid") {
-        updateData.fragrancePyramid = value as string[];
+        newValue = value ? new Date(value as string).toISOString() : undefined;
+        updateData.dateObtained = newValue;
+      } else {
+        updateData[field] = value;
       }
 
-      update({ id: initialData._id, ...updateData });
+      setFormData((prevData) => ({
+        ...prevData,
+        [field]: newValue,
+      }));
+
+      update(updateData);
     },
-    [update, initialData._id, categories]
+    [update, initialData._id]
   );
 
   const onRedirect = useCallback(
@@ -128,15 +143,14 @@ export const EditMaterialSheet: React.FC<EditMaterialProps> = ({
         </div>
       </div>
 
+      {/* <div className="w-full"> */}
+        <ProfilesField
+          selectedProfiles={selectedProfiles}
+          onChange={(value) => handleInputChange("profiles", value)}
+        />
+      {/* </div> */}
+
       <div className="flex flex-col items-center w-full md:flex-row gap-4">
-        <div className="w-full">
-          <SelectField
-            label="Category"
-            value={formData.category?.name || ""}
-            onChange={(value) => handleInputChange("category", value)}
-            options={categories}
-          />
-        </div>
         <div className="w-full">
           <InputField
             label="CAS Number"
@@ -145,12 +159,13 @@ export const EditMaterialSheet: React.FC<EditMaterialProps> = ({
             placeholder="CAS Number (e.g., 1234-56-7)"
           />
         </div>
+        <div className="w-full">
+          <FragrancePyramidField
+            value={formData.fragrancePyramid}
+            onChange={(value) => handleInputChange("fragrancePyramid", value)}
+          />
+        </div>
       </div>
-
-      <FragrancePyramidField
-        value={formData.fragrancePyramid}
-        onChange={(value) => handleInputChange("fragrancePyramid", value)}
-      />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <IFRALimitField

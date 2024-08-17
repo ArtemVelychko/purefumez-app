@@ -10,6 +10,7 @@ interface InputFieldProps {
   required?: boolean;
   type?: string;
   error?: string;
+  disabled?: boolean;
 }
 
 export const InputField: React.FC<InputFieldProps> = ({
@@ -20,6 +21,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   required = false,
   type = "text",
   error,
+  disabled,
 }) => {
   const id = label.toLowerCase().replace(/\s+/g, "-");
 
@@ -37,6 +39,7 @@ export const InputField: React.FC<InputFieldProps> = ({
         placeholder={placeholder}
         required={required}
         className={`w-full ${error ? "border-destructive" : ""}`}
+        disabled={disabled}
       />
       {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>

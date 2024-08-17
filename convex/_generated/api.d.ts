@@ -17,6 +17,7 @@ import type {
 import type * as accords from "../accords.js";
 import type * as formulas from "../formulas.js";
 import type * as materials from "../materials.js";
+import type * as profiles from "../profiles.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   accords: typeof accords;
   formulas: typeof formulas;
   materials: typeof materials;
+  profiles: typeof profiles;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

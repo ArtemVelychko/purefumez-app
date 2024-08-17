@@ -221,6 +221,7 @@ export const updateFormula = mutation({
     ),
     solvent: v.optional(v.object({ name: v.string(), weight: v.number() })),
     concentration: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -309,7 +310,7 @@ export const saveFormulaToLibrary = mutation({
           // If the user doesn't have this material, create a new one
           const newMaterial = await ctx.db.insert("materials", {
             title: existingMaterial.title,
-            category: existingMaterial.category,
+            profiles: existingMaterial.profiles,
             cas: existingMaterial.cas,
             altName: existingMaterial.altName,
             ifralimit: existingMaterial.ifralimit,

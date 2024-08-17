@@ -4,9 +4,14 @@ import { Input } from "@/components/ui/input";
 interface IFRALimitFieldProps {
   value: number;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }
 
-export const IFRALimitField: React.FC<IFRALimitFieldProps> = ({ value, onChange }) => (
+export const IFRALimitField: React.FC<IFRALimitFieldProps> = ({
+  value,
+  onChange,
+  disabled,
+}) => (
   <div>
     <Label className="mb-1 block text-sm font-medium">IFRA Limit</Label>
     <div className="relative flex-1">
@@ -15,6 +20,7 @@ export const IFRALimitField: React.FC<IFRALimitFieldProps> = ({ value, onChange 
         min={0}
         max={100}
         value={`${value}`}
+        disabled={disabled}
         onChange={(e) => {
           const newValue =
             e.target.value === ""

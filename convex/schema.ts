@@ -5,11 +5,7 @@ export default defineSchema({
   materials: defineTable({
     title: v.string(),
     userId: v.string(),
-    category: v.object({
-      name: v.string(),
-      color: v.string(),
-      isCustom: v.boolean(),
-    }),
+    profiles: v.array(v.id("profiles")),
     inventory: v.boolean(),
     isArchived: v.boolean(),
     cas: v.optional(v.string()),
@@ -45,6 +41,7 @@ export default defineSchema({
       )
     ),
     concentration: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
   })
     .index("by_user", ["userId"])
     .index("by_user_and_title", ["userId", "title"]),
@@ -76,5 +73,12 @@ export default defineSchema({
       )
     ),
     concentration: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
+  }).index("by_user", ["userId"]),
+
+  profiles: defineTable({
+    userId: v.string(),
+    title: v.string(),
+    color: v.string(),
   }).index("by_user", ["userId"]),
 });

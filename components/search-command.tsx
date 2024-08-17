@@ -84,10 +84,6 @@ export const SearchCommand = () => {
               title={material.title}
               onSelect={() => onSelect("materials", material._id)}
             >
-              <span
-                className="mr-2 h-2 w-2 rounded-full"
-                style={{ backgroundColor: material.category.color }}
-              ></span>
               <span>{material.title}</span>
             </CommandItem>
           ))}

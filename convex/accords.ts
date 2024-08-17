@@ -248,6 +248,7 @@ export const updateAccord = mutation({
     note: v.optional(v.string()),
     isPublished: v.optional(v.boolean()),
     isBase: v.optional(v.boolean()),
+    tags: v.optional(v.array(v.string())),
     materialsInFormula: v.optional(
       v.array(
         v.object({
@@ -364,7 +365,7 @@ export const saveAccordToLibrary = mutation({
           // If the user doesn't have this material, create a new one
           const newMaterial = await ctx.db.insert("materials", {
             title: existingMaterial.title,
-            category: existingMaterial.category,
+            profiles: existingMaterial.profiles,
             cas: existingMaterial.cas,
             altName: existingMaterial.altName,
             ifralimit: existingMaterial.ifralimit,

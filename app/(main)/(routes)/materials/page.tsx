@@ -11,9 +11,11 @@ import { Spinner } from "@/components/spinner";
 import { useMutation } from "convex/react";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
+import { Material } from "./columns"; // Make sure to import the Material type
 
 const MaterialsPage = () => {
-  const materials = useQuery(api.materials.getSidebar);
+  const materialsData = useQuery(api.materials.getSidebar);
+  const profilesData = useQuery(api.profiles.get);
   const { material } = useOnOpenMaterial();
   const bulkDelete = useMutation(api.materials.bulkRemove);
 
@@ -29,17 +31,28 @@ const MaterialsPage = () => {
     }, 200);
   };
 
+  // Transform the materials data to include full profile objects
+  const materials: Material[] | undefined = materialsData && profilesData
+    ? materialsData.map(mat => ({
+        ...mat,
+        profiles: mat.profiles.map(profileId => {
+          const profile = profilesData.find(p => p._id === profileId);
+          return profile
+            ? { _id: profile._id, title: profile.title, color: profile.color }
+            : { _id: profileId, title: "Unknown", color: "#000000" };
+        })
+      }))
+    : undefined;
+
   return (
     <div className="h-full flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6 mt-14">
-      {/* <MaterialList /> */}
       <div className="flex items-center">
         <h1 className="font-semibold text-lg md:text-2xl">My Materials</h1>
         <div className="ml-auto">
           <div className="flex justify-center items-center gap-2">
-          {material && <EditMaterialSheet initialData={material} />}
-          <NewMaterialSheet />
+            {material && <EditMaterialSheet initialData={material} />}
+            <NewMaterialSheet />
           </div>
-          
         </div>
       </div>
 
@@ -52,7 +65,7 @@ const MaterialsPage = () => {
             const ids = rows.map((row) => row.original._id);
             handleDelete(ids);
           }}
-          categoryColumn="category"
+          profilesColumn="profiles"
           fragrancePyramidColumn="fragrancePyramid"
         />
       ) : (

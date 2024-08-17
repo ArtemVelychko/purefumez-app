@@ -36,11 +36,7 @@ export const create = mutation({
       userId,
       isArchived: false,
       dilutions: [100],
-      category: {
-        name: "Uncategorized",
-        color: "#808080",
-        isCustom: false,
-      },
+      profiles: [],
       inventory: true,
     });
 
@@ -51,11 +47,7 @@ export const create = mutation({
 export const createMaterial = mutation({
   args: {
     title: v.string(),
-    category: v.object({
-      name: v.string(),
-      color: v.string(),
-      isCustom: v.boolean(),
-    }),
+    profiles: v.array(v.id("profiles")),
     description: v.optional(v.string()),
     altName: v.optional(v.string()),
     cas: v.optional(v.string()),
@@ -72,7 +64,7 @@ export const createMaterial = mutation({
     const userId = identity.subject;
     const newMaterial = {
       title: args.title,
-      category: args.category,
+      profiles: args.profiles || [],
       description: args.description || "",
       altName: args.altName || "",
       cas: args.cas || "",
@@ -195,19 +187,12 @@ export const bulkRemove = mutation({
   },
 });
 
-
 export const update = mutation({
   args: {
     id: v.id("materials"),
     title: v.optional(v.string()),
     cas: v.optional(v.string()),
-    category: v.optional(
-      v.object({
-        name: v.string(),
-        color: v.string(),
-        isCustom: v.boolean(),
-      }),
-    ),
+    profiles: v.optional(v.array(v.id("profiles"))),
     ifralimit: v.optional(v.number()),
     altName: v.optional(v.string()),
     fragrancePyramid: v.optional(v.array(v.string())),
@@ -242,35 +227,6 @@ export const update = mutation({
     }
 
     const material = await ctx.db.patch(args.id, { ...rest });
-
-    return material;
-  },
-});
-
-export const removeCoverImage = mutation({
-  args: { id: v.id("materials") },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const userId = identity.subject;
-
-    const existingMaterial = await ctx.db.get(args.id);
-
-    if (!existingMaterial) {
-      throw new Error("Not found");
-    }
-
-    if (existingMaterial.userId !== userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const material = await ctx.db.patch(args.id, {
-      coverImage: undefined,
-    });
 
     return material;
   },
@@ -334,11 +290,7 @@ export const getSearch = query({
 export const saveMaterial = mutation({
   args: {
     title: v.string(),
-    category: v.object({
-      name: v.string(),
-      color: v.string(),
-      isCustom: v.boolean(),
-    }),
+    profiles: v.array(v.id("profiles")),
     cas: v.optional(v.string()),
     altName: v.optional(v.string()),
     ifralimit: v.optional(v.number()),
@@ -387,18 +339,20 @@ export const getMaterialsForAccord = query({
       throw new Error("Accord not found");
     }
 
-    const materialIds = accord.materialsInFormula?.map(m => m.material) || [];
+    const materialIds = accord.materialsInFormula?.map((m) => m.material) || [];
 
     const materials = await ctx.db
       .query("materials")
-      .filter(q => q.and(
-        q.eq(q.field("userId"), accord.userId),
-        q.or(...materialIds.map(id => q.eq(q.field("_id"), id)))
-      ))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), accord.userId),
+          q.or(...materialIds.map((id) => q.eq(q.field("_id"), id)))
+        )
+      )
       .collect();
 
     return materials;
-  }
+  },
 });
 
 export const getMaterialsForFormula = query({
@@ -409,16 +363,19 @@ export const getMaterialsForFormula = query({
       throw new Error("Formula not found");
     }
 
-    const materialIds = formula.materialsInFormula?.map(m => m.material) || [];
+    const materialIds =
+      formula.materialsInFormula?.map((m) => m.material) || [];
 
     const materials = await ctx.db
       .query("materials")
-      .filter(q => q.and(
-        q.eq(q.field("userId"), formula.userId),
-        q.or(...materialIds.map(id => q.eq(q.field("_id"), id)))
-      ))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("userId"), formula.userId),
+          q.or(...materialIds.map((id) => q.eq(q.field("_id"), id)))
+        )
+      )
       .collect();
 
     return materials;
-  }
+  },
 });

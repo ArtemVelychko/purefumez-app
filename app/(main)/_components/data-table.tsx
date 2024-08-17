@@ -11,18 +11,9 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-} from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash, Filter } from "lucide-react";
+import { Trash, Filter, Search, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -31,12 +22,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, X } from "lucide-react";
 import { DataTableFacetedFilter } from "./data-table/data-table-faceted-filter";
 import { useMediaQuery } from "usehooks-ts";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+
+interface Profile {
+  _id: string;
+  title: string;
+  color: string;
+}
+
+interface FilterOption {
+  value: string;
+  label: string;
+  color?: string;
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -44,7 +49,7 @@ interface DataTableProps<TData, TValue> {
   filterKey: string;
   onDelete: (rows: Row<TData>[]) => void;
   disabled?: boolean;
-  categoryColumn?: keyof TData & string;
+  profilesColumn?: keyof TData & string;
   fragrancePyramidColumn?: keyof TData & string;
 }
 
@@ -54,7 +59,7 @@ export function DataTable<TData, TValue>({
   filterKey,
   onDelete,
   disabled,
-  categoryColumn,
+  profilesColumn,
   fragrancePyramidColumn,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -62,12 +67,11 @@ export function DataTable<TData, TValue>({
     []
   );
   const [rowSelection, setRowSelection] = React.useState({});
-  const [categoryOptions, setCategoryOptions] = React.useState<
-    { name: string; color: string }[]
-  >([]);
+  const [profileOptions, setProfileOptions] = React.useState<Profile[]>([]);
   const [fragrancePyramidOptions, setFragrancePyramidOptions] = React.useState<
     string[]
   >([]);
+
   const table = useReactTable({
     data: data || [],
     columns,
@@ -78,55 +82,64 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
     state: {
       sorting,
       columnFilters,
       rowSelection,
     },
   });
+
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   React.useEffect(() => {
-    if (data) {
-      // Category options
-      if (categoryColumn) {
-        const uniqueCategories = Array.from(
-          new Set(
-            data.map((item) => JSON.stringify((item as any)[categoryColumn]))
-          )
-        ).map((item) => JSON.parse(item));
-        setCategoryOptions(uniqueCategories);
-      }
-
-      // Fragrance pyramid options
-      if (fragrancePyramidColumn) {
-        const allNotes = data.flatMap(
-          (item: any) => item[fragrancePyramidColumn] || []
-        );
-        const uniqueNotes = Array.from(new Set(allNotes));
-        setFragrancePyramidOptions(uniqueNotes);
-      }
+    if (data && profilesColumn) {
+      const allProfiles = data.flatMap(
+        (item: any) => item[profilesColumn] || []
+      );
+      const uniqueProfiles = allProfiles.reduce(
+        (acc: Profile[], profile: Profile) => {
+          if (!acc.some((p) => p._id === profile._id)) {
+            acc.push(profile);
+          }
+          return acc;
+        },
+        []
+      );
+      setProfileOptions(uniqueProfiles);
     }
-  }, [data, categoryColumn, fragrancePyramidColumn]);
 
-  const filteredSelectedRows = table.getFilteredSelectedRowModel?.().rows ?? [];
+    if (data && fragrancePyramidColumn) {
+      const allNotes = data.flatMap(
+        (item: any) => item[fragrancePyramidColumn] || []
+      );
+      const uniqueNotes = Array.from(new Set(allNotes));
+      setFragrancePyramidOptions(uniqueNotes);
+    }
+  }, [data, profilesColumn, fragrancePyramidColumn]);
+
+  const filteredSelectedRows = table.getFilteredSelectedRowModel().rows;
   const isFiltered = table.getState().columnFilters.length > 0;
 
   const renderFilters = () => (
     <>
-      {categoryColumn && table.getColumn(categoryColumn) && (
+      {profilesColumn && table.getColumn(profilesColumn) && (
         <DataTableFacetedFilter
-          column={table.getColumn(categoryColumn)}
-          options={categoryOptions}
-          title="Category"
+          column={table.getColumn(profilesColumn)}
+          options={profileOptions.map((profile) => ({
+            value: profile._id,
+            label: profile.title,
+            color: profile.color,
+          }))}
+          title="Profiles"
         />
       )}
       {fragrancePyramidColumn && table.getColumn(fragrancePyramidColumn) && (
         <DataTableFacetedFilter
           column={table.getColumn(fragrancePyramidColumn)}
-          options={fragrancePyramidOptions}
+          options={fragrancePyramidOptions.map((note) => ({
+            value: note,
+            label: note,
+          }))}
           title="Fragrance Notes"
         />
       )}
@@ -136,6 +149,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="border shadow-sm rounded-md">
       <div className="flex items-center gap-4 border-b bg-gray-100/40 px-6 py-4 dark:bg-gray-800/40">
+        {/* Search input */}
         <div className="flex-1">
           <div className="flex items-center space-x-2">
             <div className="relative w-full">
@@ -156,9 +170,7 @@ export function DataTable<TData, TValue>({
             {isFiltered && (
               <Button
                 className="h-8 lg:px-3"
-                onClick={() => {
-                  table.resetColumnFilters();
-                }}
+                onClick={() => table.resetColumnFilters()}
                 variant="ghost"
               >
                 Reset
@@ -167,6 +179,8 @@ export function DataTable<TData, TValue>({
             )}
           </div>
         </div>
+
+        {/* Mobile filters */}
         {isMobile && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -175,7 +189,7 @@ export function DataTable<TData, TValue>({
                 className="ml-auto font-normal text-xs"
                 size="sm"
               >
-                <Filter className="h-4 w-4"/>
+                <Filter className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -184,6 +198,8 @@ export function DataTable<TData, TValue>({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+
+        {/* Delete button */}
         {filteredSelectedRows.length > 0 && (
           <Button
             disabled={disabled}
@@ -200,6 +216,8 @@ export function DataTable<TData, TValue>({
           </Button>
         )}
       </div>
+
+      {/* Table */}
       <div className="relative w-full overflow-auto">
         <Table className="w-full caption-bottom text-sm">
           <TableHeader className="[&>tr]:border-b">
@@ -254,32 +272,34 @@ export function DataTable<TData, TValue>({
             )}
           </TableBody>
         </Table>
-        <div className="flex items-center justify-end space-x-2 p-4">
-          <div className="flex-1 text-sm text-muted-foreground">
-            {filteredSelectedRows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div>
-          {table.getRowCount() > 10 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </Button>
-            </>
-          )}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-end space-x-2 p-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {filteredSelectedRows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
+        {table.getRowCount() > 10 && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

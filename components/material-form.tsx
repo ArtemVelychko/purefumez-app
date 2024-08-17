@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTheme } from "next-themes";
 import { api } from "@/convex/_generated/api";
-import { Doc } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, MinusIcon, CalendarIcon, CopyPlus } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
@@ -37,6 +37,17 @@ import { ShareMaterial } from "@/app/(main)/_components/share-material";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { pyramidLevels } from "@/lib/pyramid-links";
+import { ProfilesField } from "./materials/fields/profiles-field";
+import { DilutionsField } from "./materials/fields/dilutions-field";
+import { IFRALimitField } from "./materials/fields/ifra-limit-field";
+import { FragrancePyramidField } from "./materials/fields/fragrance-pyramid-field";
+import { InputField } from "./materials/fields/input-field";
+
+type Profile = {
+  _id: Id<"profiles">;
+  title: string;
+  color: string;
+};
 
 interface MaterialFormProps {
   initialData: Doc<"materials">;
@@ -51,7 +62,7 @@ export const MaterialForm = ({
 }: MaterialFormProps) => {
   const [formData, setFormData] = useState({
     title: initialData.title,
-    category: initialData.category,
+    profiles: initialData.profiles || [],
     cas: initialData.cas || "",
     altName: initialData.altName || "",
     ifralimit: initialData.ifralimit || 0,
@@ -73,50 +84,43 @@ export const MaterialForm = ({
     materialId: initialData._id,
   });
   const saveMaterial = useMutation(api.materials.saveMaterial);
+  const allProfiles = useQuery(api.profiles.get) || [];
 
-  const handleInputChange = (field: keyof typeof formData, value: unknown) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [field]: value,
-    }));
+  const handleInputChange = useCallback(
+    (field: keyof typeof formData, value: any) => {
+      let newValue = value;
+      let updateData: {
+        id: Id<"materials">;
+        profiles: Id<"profiles">[];
+        [key: string]: unknown;
+      } = {
+        id: initialData._id,
+        profiles: formData.profiles,
+      };
 
-    if (field === "dilutions") {
-      const updatedDilutions = [100, ...(value as number[])];
-      update({
-        id: initialData._id,
-        dilutions: updatedDilutions,
-      });
-    } else if (field === "fragrancePyramid") {
-      const updatedFragrancePyramid = value as string[];
-      update({
-        id: initialData._id,
-        fragrancePyramid: updatedFragrancePyramid,
-      });
-    } else if (field === "dateObtained") {
-      const dateValue = value instanceof Date ? value.toISOString() : undefined;
-      update({
-        id: initialData._id,
-        dateObtained: dateValue,
-      });
-    } else if (field === "category") {
-      const selectedCategory = categories.find(
-        (category) => category.name === value
-      );
+      if (field === "dilutions") {
+        // Handle dilutions separately
+        newValue = value as number[];
+        updateData.dilutions = [100, ...newValue];
+      } else if (field === "profiles") {
+        newValue = (value as Profile[]).map((profile) => profile._id);
+        updateData.profiles = newValue;
+      } else if (field === "dateObtained") {
+        newValue = value ? new Date(value as string).toISOString() : undefined;
+        updateData.dateObtained = newValue;
+      } else {
+        updateData[field] = value;
+      }
+
       setFormData((prevData) => ({
         ...prevData,
-        category: selectedCategory || prevData.category,
+        [field]: newValue,
       }));
-      update({
-        id: initialData._id,
-        category: selectedCategory,
-      });
-    } else {
-      update({
-        id: initialData._id,
-        [field]: value,
-      });
-    }
-  };
+
+      update(updateData);
+    },
+    [update, initialData._id]
+  );
 
   const handleSaveMaterial = async () => {
     if (!user) {
@@ -135,17 +139,16 @@ export const MaterialForm = ({
 
     const newMaterial = {
       title: formData.title,
-      category: formData.category,
+      profiles: formData.profiles,
       cas: formData.cas,
       altName: formData.altName,
       ifralimit: formData.ifralimit,
-      dilutions: [100],
+      dilutions: [100, ...formData.dilutions],
       fragrancePyramid: formData.fragrancePyramid,
       dateObtained: formData.dateObtained,
       description: formData.description,
       price: formData.price,
       inventory: false,
-      // Add any other fields that your material schema requires
     };
 
     const promise = saveMaterial(newMaterial);
@@ -164,16 +167,24 @@ export const MaterialForm = ({
     }
   };
 
+  const selectedProfiles = formData.profiles.map(
+    (profileId) =>
+      allProfiles.find((p) => p._id === profileId) || {
+        _id: profileId,
+        title: "Unknown",
+        color: "#000000",
+      }
+  );
+
   return (
     <div className="flex h-full flex-col gap-4 p-4 md:p-6">
-      <div className="pl-4 group relative">
-        {/* Inputs */}
+      <div className="pl-4 relative">
         <div className="space-y-4 mt-8">
           <div className="flex items-center justify-between">
             <Input
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
-              className="text-4xl bg-transparent font-bold break-words outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="text-4xl bg-transparent font-bold break-words outline-none text-[#3F3F3F] dark:text-[#CFCFCF] resize-none border-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               disabled={preview}
             />
             {!preview && (
@@ -192,9 +203,7 @@ export const MaterialForm = ({
               </div>
             )}
 
-            {material && !preview && (
-              <ShareMaterial initialData={material}></ShareMaterial>
-            )}
+            {material && !preview && <ShareMaterial initialData={material} />}
 
             {preview && (
               <TooltipProvider>
@@ -205,204 +214,57 @@ export const MaterialForm = ({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Add material my collection</p>
+                    <p>Add material to my collection</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
           </div>
 
-          <div>
-            <label className="pt-2 mb-1 block text-sm font-medium text-gray-900 dark:text-white">
-              Category
-            </label>
-            <Select
-              onValueChange={(value) => handleInputChange("category", value)}
-              value={formData.category.name}
-              disabled={preview}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.name} value={category.name}>
-                    <div className="flex items-center">
-                      <span
-                        className="mr-2 h-2 w-2 rounded-full"
-                        style={{ backgroundColor: category.color }}
-                      ></span>
-                      {category.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ProfilesField
+            selectedProfiles={selectedProfiles}
+            onChange={(value) => handleInputChange("profiles", value)}
+            disabled={preview}
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
-              CAS Number
-            </label>
-
-            {/* Need to add a new component for OTP input */}
-
-            <Input
+          <div className="w-full">
+            <InputField
+              label="CAS Number"
               value={formData.cas}
-              onChange={(e) => handleInputChange("cas", e.target.value)}
+              onChange={(value) => handleInputChange("cas", value)}
               placeholder="CAS Number (e.g., 1234-56-7)"
               disabled={preview}
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
-              Fragrance pyramid
-            </label>
-            <div className="flex gap-x-1">
-              <ToggleGroup
-                type="multiple"
-                onValueChange={(value) =>
+          <div className="flex flex-col items-center w-full md:flex-row gap-4">
+            <div className="w-full">
+              <FragrancePyramidField
+                value={formData.fragrancePyramid}
+                onChange={(value) =>
                   handleInputChange("fragrancePyramid", value)
                 }
-                value={formData.fragrancePyramid}
-                disabled={preview}
-              >
-                {pyramidLevels.map((level) => (
-                  <ToggleGroupItem key={level.value} value={level.value}>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="size-5">
-                            <Image
-                              alt={level.tooltip}
-                              height="24"
-                              width="24"
-                              src={
-                                level.src[theme as keyof typeof level.src] ||
-                                level.src.light
-                              }
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>{level.tooltip}</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
-              IFRA Limit
-            </label>
-            <div className="relative flex-1">
-              <Input
-                type="number"
-                min={0}
-                max={99}
-                value={`${formData.ifralimit}`}
-                onChange={(e) => {
-                  const value = e.target.value;
-
-                  if (value === "") {
-                    handleInputChange("ifralimit", 0);
-                  } else {
-                    handleInputChange("ifralimit", Number(value));
-                  }
-                }}
-                placeholder="IFRA Limit"
                 disabled={preview}
               />
-              <div className="absolute inset-y-0 right-5 flex items-center pr-3 pointer-events-none">
-                <span className="text-sm text-muted-foreground">%</span>
-              </div>
+            </div>
+            <div className="w-full">
+              <IFRALimitField
+                value={formData.ifralimit}
+                onChange={(value) =>
+                  handleInputChange("ifralimit", Number(value))
+                }
+                disabled={preview}
+              />
             </div>
           </div>
+
           {!preview && (
             <div className="flex flex-row justify-between">
               {/* Dilutions */}
-              <div>
-                <Label>
-                  My Dilutions
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline">Open</Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="flex flex-col gap-y-2">
-                      {/* Original Dilution */}
-                      <div className="flex items-center">
-                        <div className="relative flex-1">
-                          <Input type="number" value={100} disabled />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <span className="text-sm text-muted-foreground">
-                              %
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Additional Dilutions */}
-                      {formData.dilutions.map((dilution, index) => (
-                        <div key={index} className="flex items-center">
-                          <div className="relative flex-1">
-                            <Input
-                              type="number"
-                              placeholder="Dilution"
-                              min={0}
-                              max={100}
-                              value={dilution}
-                              onChange={(e) => {
-                                const newDilutions = [...formData.dilutions];
-                                newDilutions[index] = Number(e.target.value);
-                                handleInputChange("dilutions", newDilutions);
-                              }}
-                              // disabled={preview}
-                              className="-webkit-inner-spin-button: pr-8"
-                            />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                              <span className="text-sm text-muted-foreground">
-                                %
-                              </span>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              const newDilutions = [...formData.dilutions];
-                              newDilutions.splice(index, 1);
-                              handleInputChange("dilutions", newDilutions);
-                            }}
-                            className="ml-2"
-                          >
-                            <MinusIcon className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-
-                      {/* Add Dilution Button */}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const newDilutions = [...formData.dilutions, 10];
-                          handleInputChange("dilutions", newDilutions);
-                        }}
-                      >
-                        <PlusIcon className="h-3 w-3 mr-1" />
-                        Add Dilution
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <DilutionsField
+                dilutions={formData.dilutions}
+                onChange={(value) => handleInputChange("dilutions", value)}
+              />
 
               <PriceField
                 value={formData.price}

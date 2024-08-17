@@ -23,14 +23,18 @@ import {
   DateObtainedField,
   TextareaField,
 } from "./fields";
+import { ProfilesField } from "./fields/profiles-field";
+import { Id } from "@/convex/_generated/dataModel";
+
+interface Profile {
+  _id: Id<"profiles">;
+  title: string;
+  color: string;
+}
 
 interface FormData {
   title: string;
-  category: {
-    name: string;
-    color: string;
-    isCustom: boolean;
-  };
+  profiles: Profile[];
   altName: string;
   cas: string;
   fragrancePyramid: string[];
@@ -47,7 +51,7 @@ export const NewMaterialSheet = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     title: "",
-    category: { name: "Uncategorized", color: "#808080", isCustom: false },
+    profiles: [],
     altName: "",
     cas: "",
     fragrancePyramid: [],
@@ -72,6 +76,7 @@ export const NewMaterialSheet = () => {
       event.preventDefault();
       const newMaterial = {
         ...formData,
+        profiles: formData.profiles.map((p) => p._id),
         dilutions: [100, ...formData.dilutions],
         dateObtained: formData.dateObtained
           ? new Date(formData.dateObtained).toISOString()
@@ -86,7 +91,7 @@ export const NewMaterialSheet = () => {
       setIsOpen(false);
       setFormData({
         title: "",
-        category: { name: "Uncategorized", color: "#808080", isCustom: false },
+        profiles: [],
         altName: "",
         cas: "",
         fragrancePyramid: [],
@@ -110,35 +115,26 @@ export const NewMaterialSheet = () => {
         onChange={(value) => handleInputChange("title", value)}
         required
       />
+      <ProfilesField
+        selectedProfiles={formData.profiles}
+        onChange={(profiles) => handleInputChange("profiles", profiles)}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SelectField
-          label="Category"
-          value={formData.category.name}
-          onChange={(value) => {
-            const selectedCategory = categories.find(
-              (cat) => cat.name === value
-            );
-            if (selectedCategory) {
-              handleInputChange("category", selectedCategory);
-            }
-          }}
-          options={categories}
-        />
         <InputField
           label="CAS Number"
           value={formData.cas}
           onChange={(value) => handleInputChange("cas", value)}
           placeholder="CAS Number (e.g., 1234-56-7)"
         />
-      </div>
 
-      <FragrancePyramidField
-        value={formData.fragrancePyramid}
-        onChange={(value) =>
-          handleInputChange("fragrancePyramid", value as string[])
-        }
-      />
+        <FragrancePyramidField
+          value={formData.fragrancePyramid}
+          onChange={(value) =>
+            handleInputChange("fragrancePyramid", value as string[])
+          }
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <IFRALimitField

@@ -7,7 +7,11 @@ interface PriceFieldProps {
   disabled?: boolean;
 }
 
-export const PriceField: React.FC<PriceFieldProps> = ({ value, onChange, disabled }) => (
+export const PriceField: React.FC<PriceFieldProps> = ({
+  value,
+  onChange,
+  disabled,
+}) => (
   <div>
     <Label className="mb-1 block text-sm font-medium">Cost</Label>
     <div className="relative flex-1">

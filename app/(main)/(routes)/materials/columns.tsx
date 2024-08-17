@@ -16,11 +16,12 @@ import { NameAction } from "./nameAction";
 import { DataTableColumnHeader } from "../../_components/table-column-header";
 import { pyramidLevels } from "@/lib/pyramid-links";
 import { useTheme } from "next-themes";
+import { Badge } from "@/components/ui/badge";
 
 export type Material = {
   _id: Id<"materials">;
   title: string;
-  category: { name: string; color: string; isCustom: boolean };
+  profiles: Array<{ _id: Id<"profiles">; title: string; color: string }>;
   cas?: string;
   fragrancePyramid?: string[];
   dateObtained?: string;
@@ -107,29 +108,29 @@ export const columns: ColumnDef<Material>[] = [
     },
   },
   {
-    id: "category",
-    accessorFn: (row) => row.category.name,
+    id: "profiles",
+    accessorFn: (row) => row.profiles,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Category" />
+      <DataTableColumnHeader column={column} title="Profiles" />
     ),
     cell: ({ row }) => {
-      const category = row.original.category;
-      if (!category) return null;
-
-      const { name, color } = category;
+      const profiles = row.original.profiles;
       return (
-        <div className="flex items-center space-x-2">
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: color }}
-          />
-          <span>{name}</span>
+        <div className="flex flex-wrap gap-1">
+          {profiles.map((profile) => (
+            <Badge
+              key={profile._id}
+              style={{ backgroundColor: profile.color, color: 'white' }}
+            >
+              {profile.title}
+            </Badge>
+          ))}
         </div>
       );
     },
     filterFn: (row, id, value: string[]) => {
-      const categoryName = row.getValue(id) as string;
-      return value.includes(categoryName);
+      const profiles = row.getValue(id) as Material['profiles'];
+      return value.some((v) => profiles.some(profile => profile._id === v));
     },
   },
   {

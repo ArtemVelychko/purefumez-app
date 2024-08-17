@@ -22,10 +22,16 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
 
+interface FilterOption {
+  value: string;
+  label: string;
+  color?: string;
+}
+
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
-  options: Array<{ name: string; color: string } | string>;
+  options: FilterOption[];
 }
 
 const pyramidLevels = [
@@ -68,27 +74,16 @@ export function DataTableFacetedFilter<TData, TValue>({
                   </Badge>
                 ) : (
                   options
-                    .filter((option) =>
-                      selectedValues.has(
-                        typeof option === "string" ? option : option.name
-                      )
-                    )
-                    .map((option, index) => {
-                      const optionName =
-                        typeof option === "string" ? option : option.name;
-                      const displayName =
-                        optionName.charAt(0).toUpperCase() +
-                        optionName.slice(1);
-                      return (
-                        <Badge
-                          variant="secondary"
-                          key={index}
-                          className="rounded-sm px-1 font-normal"
-                        >
-                          {displayName}
-                        </Badge>
-                      );
-                    })
+                    .filter((option) => selectedValues.has(option.value))
+                    .map((option, index) => (
+                      <Badge
+                        variant="secondary"
+                        key={index}
+                        className="rounded-sm px-1 font-normal"
+                      >
+                        {option.label}
+                      </Badge>
+                    ))
                 )}
               </div>
             </>
@@ -102,19 +97,15 @@ export function DataTableFacetedFilter<TData, TValue>({
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               {options.map((option, index) => {
-                const optionName =
-                  typeof option === "string" ? option : option.name;
-                const displayName =
-                  optionName.charAt(0).toUpperCase() + optionName.slice(1);
-                const isSelected = selectedValues.has(optionName);
+                const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
                     key={index}
                     onSelect={() => {
                       if (isSelected) {
-                        selectedValues.delete(optionName);
+                        selectedValues.delete(option.value);
                       } else {
-                        selectedValues.add(optionName);
+                        selectedValues.add(option.value);
                       }
                       const filterValues = Array.from(selectedValues);
                       column?.setFilterValue(
@@ -137,21 +128,21 @@ export function DataTableFacetedFilter<TData, TValue>({
                         {pyramidLevels.find(
                           (level) =>
                             level.value.toLowerCase() ===
-                            optionName.toLowerCase()
+                            option.value.toLowerCase()
                         ) && (
                           <Image
                             src={
                               pyramidLevels.find(
                                 (level) =>
                                   level.value.toLowerCase() ===
-                                  optionName.toLowerCase()
+                                  option.value.toLowerCase()
                               )!.src
                             }
                             alt={
                               pyramidLevels.find(
                                 (level) =>
                                   level.value.toLowerCase() ===
-                                  optionName.toLowerCase()
+                                  option.value.toLowerCase()
                               )!.tooltip
                             }
                             width={16}
@@ -160,17 +151,17 @@ export function DataTableFacetedFilter<TData, TValue>({
                         )}
                       </div>
                     ) : (
-                      typeof option !== "string" && (
+                      option.color && (
                         <div
                           className="mr-2 w-4 h-4 rounded-full"
                           style={{ backgroundColor: option.color }}
                         />
                       )
                     )}
-                    <span>{displayName}</span>
-                    {facets?.get(optionName) && (
+                    <span>{option.label}</span>
+                    {facets?.get(option.value) && (
                       <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
-                        {facets.get(optionName)}
+                        {facets.get(option.value)}
                       </span>
                     )}
                   </CommandItem>
