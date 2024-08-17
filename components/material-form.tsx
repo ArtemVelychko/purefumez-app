@@ -177,9 +177,9 @@ export const MaterialForm = ({
   );
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4 md:p-6">
+    <div className="flex h-full flex-col gap-4 p-4 md:p-6 items-center">
       <div className="pl-4 relative">
-        <div className="space-y-4 mt-8">
+        <div className="space-y-4 mt-8 max-w-xl">
           <div className="flex items-center justify-between">
             <Input
               value={formData.title}
@@ -259,21 +259,23 @@ export const MaterialForm = ({
           </div>
 
           {!preview && (
-            <div className="flex flex-row justify-between">
-              {/* Dilutions */}
-              <DilutionsField
-                dilutions={formData.dilutions}
-                onChange={(value) => handleInputChange("dilutions", value)}
-              />
+            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 sm:items-start">
+              <div className="w-full sm:w-1/3">
+                <DilutionsField
+                  dilutions={formData.dilutions}
+                  onChange={(value) => handleInputChange("dilutions", value)}
+                />
+              </div>
 
-              <PriceField
-                value={formData.price}
-                onChange={(value) => handleInputChange("price", value)}
-                disabled={preview}
-              />
+              <div className="w-full sm:w-1/3">
+                <PriceField
+                  value={formData.price}
+                  onChange={(value) => handleInputChange("price", value)}
+                  disabled={preview}
+                />
+              </div>
 
-              {/* Date Obtained */}
-              <div>
+              <div className="w-full sm:w-1/3">
                 <label className="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
                   Date Obtained
                 </label>
