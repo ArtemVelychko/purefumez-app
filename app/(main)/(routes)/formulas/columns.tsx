@@ -7,12 +7,14 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Actions } from "./actions";
 import { NameAction } from "./nameAction";
 import { DataTableColumnHeader } from "../../_components/table-column-header";
+import { Badge } from "@/components/ui/badge";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 
 export type Formula = {
   _id: Id<"formulas">;
   title: string;
   concentration?: number;
-  // Add any other formula-specific fields here
+  tags?: string[];
 };
 
 export type ResponseType = FunctionReturnType<typeof api.formulas.getFormulasSidebar>;
@@ -46,6 +48,48 @@ export const columns: ColumnDef<Formula>[] = [
       <DataTableColumnHeader column={column} title="Name" hideHideOption />
     ),
     cell: ({ row }) => <NameAction id={row.original._id} />,
+  },
+  {
+    accessorKey: "tags",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Tags" />
+    ),
+    cell: ({ row }) => {
+      const tags = row.original.tags || [];
+      const displayTags = tags.slice(0, 3);
+      const remainingCount = tags.length - 3;
+      const remainingTags = tags.slice(3);
+
+      return (
+        <div className="flex flex-wrap items-center gap-1">
+          {displayTags.map((tag, index) => (
+            <Badge key={index} variant="outline">
+              {tag}
+            </Badge>
+          ))}
+          {remainingCount > 0 && (
+            <HoverCard>
+              <HoverCardTrigger>
+                <Badge variant="secondary" className="cursor-help">
+                  +{remainingCount} more
+                </Badge>
+              </HoverCardTrigger>
+              <HoverCardContent className="flex flex-wrap gap-1">
+                {remainingTags.map((tag, index) => (
+                  <Badge key={index} variant="outline">
+                    {tag}
+                  </Badge>
+                ))}
+              </HoverCardContent>
+            </HoverCard>
+          )}
+        </div>
+      );
+    },
+    filterFn: (row, id, value: string[]) => {
+      const tags = row.getValue<string[]>("tags") || [];
+      return value.length === 0 ? true : value.some((val) => tags.includes(val));
+    },
   },
   {
     accessorKey: "concentration",
