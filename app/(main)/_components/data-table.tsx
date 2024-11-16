@@ -37,6 +37,10 @@ interface Profile {
   color: string;
 }
 
+interface Tag {
+  title: string;
+}
+
 interface FilterOption {
   value: string;
   label: string;
@@ -50,6 +54,7 @@ interface DataTableProps<TData, TValue> {
   onDelete: (rows: Row<TData>[]) => void;
   disabled?: boolean;
   profilesColumn?: keyof TData & string;
+  tagsColumn?: keyof TData & string;
   fragrancePyramidColumn?: keyof TData & string;
 }
 
@@ -60,6 +65,7 @@ export function DataTable<TData, TValue>({
   onDelete,
   disabled,
   profilesColumn,
+  tagsColumn,
   fragrancePyramidColumn,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -68,6 +74,7 @@ export function DataTable<TData, TValue>({
   );
   const [rowSelection, setRowSelection] = React.useState({});
   const [profileOptions, setProfileOptions] = React.useState<Profile[]>([]);
+  const [tagsOptions, setTagOptions] = React.useState<Tag[]>([]);
   const [fragrancePyramidOptions, setFragrancePyramidOptions] = React.useState<
     string[]
   >([]);
@@ -115,7 +122,13 @@ export function DataTable<TData, TValue>({
       const uniqueNotes = Array.from(new Set(allNotes));
       setFragrancePyramidOptions(uniqueNotes);
     }
-  }, [data, profilesColumn, fragrancePyramidColumn]);
+
+    if (data && tagsColumn) {
+      const allTags = data.flatMap((item: any) => item[tagsColumn] || []);
+      const uniqueTags = Array.from(new Set(allTags));
+      setTagOptions(uniqueTags.map(tag => ({ title: tag })));
+    }
+  }, [data, profilesColumn, fragrancePyramidColumn, tagsColumn]);
 
   const filteredSelectedRows = table.getFilteredSelectedRowModel().rows;
   const isFiltered = table.getState().columnFilters.length > 0;
@@ -141,6 +154,16 @@ export function DataTable<TData, TValue>({
             label: note,
           }))}
           title="Fragrance Notes"
+        />
+      )}
+      {tagsColumn && table.getColumn(tagsColumn) && (
+        <DataTableFacetedFilter
+          column={table.getColumn(tagsColumn)}
+          options={tagsOptions.map((tag) => ({
+            value: tag.title,
+            label: tag.title,
+          }))}
+          title="Tags"
         />
       )}
     </>
@@ -304,3 +327,4 @@ export function DataTable<TData, TValue>({
     </div>
   );
 }
+
