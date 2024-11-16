@@ -426,11 +426,7 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
         </div>
 
         <div className="mt-4">
-          <InputTags
-            value={tags}
-            onChange={setTags}
-            disabled={preview}
-          />
+          <InputTags value={tags} onChange={setTags} disabled={preview} />
         </div>
 
         <div className="mt-4">
@@ -533,9 +529,17 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                                 min={0}
                                 value={selectedMaterial.weight}
                                 onChange={(e) => {
-                                  const value = Number(e.target.value);
-                                  updateMaterialWeight(index, value);
+                                  updateMaterialWeight(
+                                    index,
+                                    e.target.valueAsNumber
+                                  );
                                 }}
+                                onBlur={(e) => {
+                                  if (!e.target.value) {
+                                    updateMaterialWeight(index, 0);
+                                  }
+                                }}
+                                step="any" // Add this to allow decimals
                                 disabled={preview}
                               />
                             )}
@@ -603,9 +607,9 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                       return (
                         <TableRow
                           key={selectedAccord.accord}
-                          className= "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                          className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                         >
-                         <TableCell className="text-sm p-4 align-middle">
+                          <TableCell className="text-sm p-4 align-middle">
                             {/* Add accord note if applicable */}
                           </TableCell>
                           <TableCell className="text-sm p-4 align-middle">
@@ -633,9 +637,17 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                                 min={0}
                                 value={selectedAccord.weight}
                                 onChange={(e) => {
-                                  const value = Number(e.target.value);
-                                  updateAccordWeight(index, value);
+                                  updateAccordWeight(
+                                    index,
+                                    e.target.valueAsNumber
+                                  );
                                 }}
+                                onBlur={(e) => {
+                                  if (!e.target.value) {
+                                    updateAccordWeight(index, 0);
+                                  }
+                                }}
+                                step="any" // Add this to allow decimals
                                 disabled={preview}
                               />
                             )}
@@ -681,11 +693,18 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
                         ) : (
                           <Input
                             type="number"
-                            value={solventWeight}
                             min={0}
-                            onChange={(e) =>
-                              setSolventWeight(Number(e.target.value))
-                            }
+                            value={solventWeight}
+                            onChange={(e) => {
+                              setSolventWeight(e.target.valueAsNumber);
+                            }}
+                            onBlur={(e) => {
+                              if (!e.target.value) {
+                                setSolventWeight(0);
+                              }
+                            }}
+                            step="any" // Add this to allow decimals
+                            disabled={preview}
                           />
                         )}
                       </TableCell>
@@ -914,3 +933,4 @@ export const FormulaPage = ({ initialData, preview }: FormulaProps) => {
     </div>
   );
 };
+
