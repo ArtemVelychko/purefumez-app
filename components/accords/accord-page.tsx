@@ -65,6 +65,7 @@ import { pyramidLevels } from "@/lib/pyramid-links";
 import { useTheme } from "next-themes";
 import { Badge } from "../ui/badge";
 import { InputTags } from "../ui/input-tags";
+import { ChevronsUpDown } from "lucide-react";
 
 interface ToolbarProps {
   initialData: Doc<"accords">;
@@ -77,6 +78,15 @@ type MaterialInFormula = {
   ifralimit: number;
   dilution: number;
 };
+
+type SortDirection = "asc" | "desc" | null;
+type SortField =
+  | "note"
+  | "material"
+  | "weight"
+  | "dilution"
+  | "percentage"
+  | null;
 
 const roundToThousandths = (num: number): number => {
   return Math.round(num * 1000) / 1000;
@@ -107,6 +117,8 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
   const [note, setNote] = useState(initialData.note || "");
   const [isBase, setIsBase] = useState(initialData.isBase);
   const [tags, setTags] = useState<string[]>(initialData.tags || []);
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
 
   const accordMaterials = useQuery(api.materials.getMaterialsForAccord, {
     accordId: initialData._id,
@@ -326,6 +338,72 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
     return purePercentage <= material.ifralimit;
   };
 
+  const sortMaterials = (a: MaterialInFormula, b: MaterialInFormula) => {
+    if (!sortField || !sortDirection) return 0;
+
+    const materialA = accordMaterials?.find((m) => m._id === a.material);
+    const materialB = accordMaterials?.find((m) => m._id === b.material);
+
+    if (!materialA || !materialB) return 0;
+
+    const multiplier = sortDirection === "asc" ? 1 : -1;
+
+    switch (sortField) {
+      case "note":
+        const pyramidA = materialA.fragrancePyramid?.[0] || "";
+        const pyramidB = materialB.fragrancePyramid?.[0] || "";
+        return multiplier * pyramidA.localeCompare(pyramidB);
+
+      case "material":
+        return multiplier * materialA.title.localeCompare(materialB.title);
+
+      case "weight":
+        return multiplier * (a.weight - b.weight);
+
+      case "dilution":
+        return multiplier * (a.dilution - b.dilution);
+
+      case "percentage":
+        const percentageA =
+          totalWeight > 0 ? (a.weight / totalWeight) * 100 : 0;
+        const percentageB =
+          totalWeight > 0 ? (b.weight / totalWeight) * 100 : 0;
+        return multiplier * (percentageA - percentageB);
+
+      default:
+        return 0;
+    }
+  };
+
+  const SortButton = ({ field }: { field: SortField }) => {
+    const isActive = sortField === field;
+
+    const handleSort = () => {
+      if (sortField === field) {
+        if (sortDirection === "asc") {
+          setSortDirection("desc");
+        } else if (sortDirection === "desc") {
+          setSortDirection(null);
+          setSortField(null);
+        }
+      } else {
+        setSortField(field);
+        setSortDirection("asc");
+      }
+    };
+
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleSort}
+        className={cn("h-8 w-8 p-0", isActive && "bg-muted hover:bg-muted")}
+      >
+        <ChevronsUpDown className="h-4 w-4" />
+      </Button>
+    );
+  };
+
   return (
     <div className="flex h-full flex-col gap-4 p-4 md:p-6">
       <div className="flex-1 ml-4 mt-20">
@@ -379,11 +457,7 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
         </div>
 
         <div className="mt-4">
-          <InputTags
-            value={tags}
-            onChange={setTags}
-            disabled={preview}
-          />
+          <InputTags value={tags} onChange={setTags} disabled={preview} />
         </div>
 
         <div className="mt-4">
@@ -394,19 +468,34 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                   <TableHeader className="[&>tr]:border-b">
                     <TableRow className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                       <TableHead className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Note
+                        <div className="flex items-center space-x-2">
+                          Note
+                          <SortButton field="note" />
+                        </div>
                       </TableHead>
                       <TableHead className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Material
+                        <div className="flex items-center space-x-2">
+                          Material
+                          <SortButton field="material" />
+                        </div>
                       </TableHead>
                       <TableHead className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Weight (g)
+                        <div className="flex items-center space-x-2">
+                          Weight (g)
+                          <SortButton field="weight" />
+                        </div>
                       </TableHead>
                       <TableHead className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Concentration
+                        <div className="flex items-center space-x-2">
+                          Concentration
+                          <SortButton field="dilution" />
+                        </div>
                       </TableHead>
                       <TableHead className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        Percentage
+                        <div className="flex items-center space-x-2">
+                          Percentage
+                          <SortButton field="percentage" />
+                        </div>
                       </TableHead>
                       <TableHead className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                         {/* Actions */}
@@ -415,166 +504,180 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                   </TableHeader>
 
                   <TableBody className="[&>tr:last-child]:border-0">
-                    {materialsInFormula.map((selectedMaterial, index) => {
-                      const material = accordMaterials?.find(
-                        (m) => m._id === selectedMaterial.material
-                      );
-                      const isCompliant = ifraCompliant(
-                        selectedMaterial,
-                        totalWeight
-                      );
+                    {materialsInFormula
+                      .slice()
+                      .sort(sortMaterials)
+                      .map((selectedMaterial, index) => {
+                        const material = accordMaterials?.find(
+                          (m) => m._id === selectedMaterial.material
+                        );
+                        const isCompliant = ifraCompliant(
+                          selectedMaterial,
+                          totalWeight
+                        );
 
-                      if (!material) {
-                        return null;
-                      }
+                        if (!material) {
+                          return null;
+                        }
 
-                      const pyramidValues = material.fragrancePyramid || [];
-                      const selectedLevels = pyramidLevels.filter((level) =>
-                        pyramidValues.includes(level.value)
-                      );
+                        const pyramidValues = material.fragrancePyramid || [];
+                        const selectedLevels = pyramidLevels.filter((level) =>
+                          pyramidValues.includes(level.value)
+                        );
 
-                      const tooltipText =
-                        selectedLevels
-                          .map((level) => level.tooltip)
-                          .join(" / ") + " Note";
+                        const tooltipText =
+                          selectedLevels
+                            .map((level) => level.tooltip)
+                            .join(" / ") + " Note";
 
-                      return (
-                        <TableRow
-                          key={selectedMaterial.material}
-                          className={cn(
-                            "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-                            { "bg-red-700 bg-opacity-20": !isCompliant },
-                            { "bg-gray-700 bg-opacity-20": !material.inventory }
-                          )}
-                        >
-                          <TableCell className="text-sm p-4 align-middle">
-                            {pyramidValues.length > 0 && (
-                              <div className="flex items-center space-x-1">
-                                <HoverCard>
-                                  <HoverCardTrigger>
-                                    <div className="flex items-center space-x-1">
-                                      {selectedLevels.map((level, index) => (
-                                        <div key={index} className="size-5">
-                                          <Image
-                                            alt={tooltipText}
-                                            height={24}
-                                            width={24}
-                                            src={
-                                              level.src[
-                                                theme as keyof typeof level.src
-                                              ] || level.src.light
-                                            }
-                                          />
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </HoverCardTrigger>
-                                  <HoverCardContent className="text-sm">
-                                    {tooltipText}
-                                  </HoverCardContent>
-                                </HoverCard>
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm p-4 align-middle">
-                            <div className="flex items-center">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <div>{material.title}</div>
-                                </PopoverTrigger>
-                                <PopoverContent>
-                                  <div>
-                                    <span className="font-bold">
-                                      {material.title}
-                                    </span>
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                      {material.profiles.map((profileId) => {
-                                        const profile = allProfiles?.find(
-                                          (p) => p._id === profileId
-                                        );
-                                        return profile ? (
-                                          <Badge
-                                            key={profile._id}
-                                            style={{
-                                              backgroundColor: profile.color,
-                                            }}
-                                          >
-                                            {profile.title}
-                                          </Badge>
-                                        ) : null;
-                                      })}
-                                    </div>
-                                    {material.description && (
-                                      <div className="mt-2">
-                                        <span className="text-sm">
-                                          {material.description}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm p-4 align-middle">
-                            <Input
-                              type="number"
-                              min={0}
-                              value={selectedMaterial.weight}
-                              onChange={(e) => {
-                                const value = Number(e.target.value);
-                                updateMaterialWeight(index, value);
-                              }}
-                              disabled={preview}
-                            />
-                          </TableCell>
-                          <TableCell className="text-sm p-4 align-middle">
-                            <Select
-                              value={`${selectedMaterial.dilution}`}
-                              onValueChange={(value) =>
-                                updateMaterialDilution(index, Number(value))
+                        return (
+                          <TableRow
+                            key={selectedMaterial.material}
+                            className={cn(
+                              "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+                              { "bg-red-700 bg-opacity-20": !isCompliant },
+                              {
+                                "bg-gray-700 bg-opacity-20":
+                                  !material.inventory,
                               }
-                              disabled={preview}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {material.dilutions?.map((dilution) => (
-                                  <SelectItem
-                                    key={dilution}
-                                    value={`${dilution}`}
-                                  >
-                                    {dilution}%
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className="text-sm p-4 align-middle">
-                            {totalWeight > 0
-                              ? (
-                                  (selectedMaterial.weight / totalWeight) *
-                                  100
-                                ).toFixed(2)
-                              : 0}
-                            %
-                          </TableCell>
-                          <TableCell className="p-4 align-middle">
-                            {!preview && (
-                              <Button
-                                onClick={() => removeMaterial(index)}
-                                className="rounded-full opacity-100 transition text-muted-foreground text-xs"
-                                variant="outline"
-                                size="icon"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
                             )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                          >
+                            <TableCell className="text-sm p-4 align-middle">
+                              {pyramidValues.length > 0 && (
+                                <div className="flex items-center space-x-1">
+                                  <HoverCard>
+                                    <HoverCardTrigger>
+                                      <div className="flex items-center space-x-1">
+                                        {selectedLevels.map((level, index) => (
+                                          <div key={index} className="size-5">
+                                            <Image
+                                              alt={tooltipText}
+                                              height={24}
+                                              width={24}
+                                              src={
+                                                level.src[
+                                                  theme as keyof typeof level.src
+                                                ] || level.src.light
+                                              }
+                                            />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent className="text-sm">
+                                      {tooltipText}
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm p-4 align-middle">
+                              <div className="flex items-center">
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <div>{material.title}</div>
+                                  </PopoverTrigger>
+                                  <PopoverContent>
+                                    <div>
+                                      <span className="font-bold">
+                                        {material.title}
+                                      </span>
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {material.profiles.map((profileId) => {
+                                          const profile = allProfiles?.find(
+                                            (p) => p._id === profileId
+                                          );
+                                          return profile ? (
+                                            <Badge
+                                              key={profile._id}
+                                              style={{
+                                                backgroundColor: profile.color,
+                                              }}
+                                            >
+                                              {profile.title}
+                                            </Badge>
+                                          ) : null;
+                                        })}
+                                      </div>
+                                      {material.description && (
+                                        <div className="mt-2">
+                                          <span className="text-sm">
+                                            {material.description}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm p-4 align-middle">
+                              <Input
+                                type="number"
+                                min={0}
+                                value={selectedMaterial.weight}
+                                onChange={(e) => {
+                                  updateMaterialWeight(
+                                    index,
+                                    e.target.valueAsNumber
+                                  );
+                                }}
+                                onBlur={(e) => {
+                                  if (!e.target.value) {
+                                    updateMaterialWeight(index, 0);
+                                  }
+                                }}
+                                step="any" // Add this to allow decimals
+                                disabled={preview}
+                              />
+                            </TableCell>
+                            <TableCell className="text-sm p-4 align-middle">
+                              <Select
+                                value={`${selectedMaterial.dilution}`}
+                                onValueChange={(value) =>
+                                  updateMaterialDilution(index, Number(value))
+                                }
+                                disabled={preview}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {material.dilutions?.map((dilution) => (
+                                    <SelectItem
+                                      key={dilution}
+                                      value={`${dilution}`}
+                                    >
+                                      {dilution}%
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-sm p-4 align-middle">
+                              {totalWeight > 0
+                                ? (
+                                    (selectedMaterial.weight / totalWeight) *
+                                    100
+                                  ).toFixed(2)
+                                : 0}
+                              %
+                            </TableCell>
+                            <TableCell className="p-4 align-middle">
+                              {!preview && (
+                                <Button
+                                  onClick={() => removeMaterial(index)}
+                                  className="rounded-full opacity-100 transition text-muted-foreground text-xs"
+                                  variant="outline"
+                                  size="icon"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
 
                     <TableRow>
                       <TableCell></TableCell>
@@ -586,11 +689,17 @@ export const AccordPage = ({ initialData, preview }: ToolbarProps) => {
                       <TableCell className="text-sm">
                         <Input
                           type="number"
-                          value={solventWeight}
                           min={0}
-                          onChange={(e) =>
-                            setSolventWeight(Number(e.target.value))
-                          }
+                          value={solventWeight}
+                          onChange={(e) => {
+                            setSolventWeight(e.target.valueAsNumber);
+                          }}
+                          onBlur={(e) => {
+                            if (!e.target.value) {
+                              setSolventWeight(0);
+                            }
+                          }}
+                          step="any" // Add this to allow decimals
                           disabled={preview}
                         />
                       </TableCell>
