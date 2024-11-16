@@ -62,6 +62,7 @@ const AccordsPage = () => {
             const ids = rows.map((row) => row.original._id);
             handleDelete(ids);
           }}
+          tagsColumn="tags"
         />
       ) : (
         <Spinner />
@@ -71,3 +72,4 @@ const AccordsPage = () => {
 };
 
 export default AccordsPage;
+
