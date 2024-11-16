@@ -62,6 +62,7 @@ const FormulasPage = () => {
             const ids = rows.map((row) => row.original._id);
             handleDelete(ids);
           }}
+          tagsColumn="tags"
         />
       ) : (
         <Spinner />
