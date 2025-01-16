@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+ PureFumez - Perfumer's Digital Workspace
 
-## Getting Started
+PureFumez is a comprehensive web application designed specifically for perfumers to manage their materials, formulas, and accords. Built with Next.js and powered by Convex for real-time data synchronization.
 
-First, run the development server:
+## Key Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 🧪 Material Management
+- Create and maintain a digital inventory of perfumery materials
+- Track essential details including:
+  - CAS numbers
+  - IFRA limits
+  - Fragrance pyramid notes
+  - Dilution levels
+  - Price information
+  - Inventory status
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 📝 Formula Creation
+- Build and store perfume formulas
+- Real-time calculation of concentrations
+- Support for both materials and accords in formulas
+- Automatic IFRA compliance checking
+- Formula scaling tools
+- Dilution calculator
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🎨 Accord System
+- Create and manage accords (base compositions)
+- Share accords with other perfumers
+- Import shared accords into your library
+- Track accord concentrations
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### 💡 Smart Features
+- Built-in dilution calculator
+- Formula scaling tools
+- Material categorization with custom profiles
+- Tagging system for better organization
+- Dark/Light theme support
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### 🤝 Collaboration
+- Share formulas and accords with other perfumers
+- Preview shared compositions
+- Save shared items to your personal library
